@@ -8,6 +8,7 @@ def basic_scheduler(ms, f):
 def basic_message(title='', msg=''):
     print(title)
     print(msg)
+    print(end='\a')
 
 class Timer:
     scheduler = basic_scheduler
