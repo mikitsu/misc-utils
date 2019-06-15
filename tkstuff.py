@@ -232,61 +232,6 @@ class LabeledWidget(BaseWrappedWidget):
                            container_kw=kw)
 
 
-class ScrollableWidget(tk.Widget, metaclass=modify_call(['ScrollableWidget'])):
-    """Provide a scrollable widget.
-
-        create a ContainingWidget with a canvas and a scrollbar and add the
-        given widget to the canvas. Attach the apropriate methods.
-
-        +-------------------------------------------------+
-        | WARNING: multiple calling of a geometry manager |     
-        |          *will*  *mess*  *things*  *up*         |
-        +-------------------------------------------------+"""
-    def __new__(cls, master, widget, direction=tk.VERTICAL,
-                width=None, height=None):
-        d = {tk.VERTICAL: 'y', tk.HORIZONTAL: 'x'}[direction]
-        container = ContainingWidget(master,  # attention: order matters and is used
-                                     (tk.Canvas, {'width': width, 'height': height}),
-                                     (tk.Scrollbar, {})
-                                     )
-        canvas, scrollbar = container.widgets
-        canvas.config(**{d+'scrollcommand': scrollbar.set})
-        scrollbar.config(command=getattr(canvas, d+'view'))
-        wcls, wkw = widget
-        self = type('Scrollable'+wcls.__name__, (cls, ProxyWidget, wcls),
-                    {'__new__': lambda c,*si,**nk: object.__new__(c)}
-                    )(master, container=container, **wkw)
-        canvas.create_window((0, 0), window=self)
-        return self
-
-    def set_scrollregion(self):
-        canvas = self.container.widgets[0]
-        sw, sh = self.winfo_width(), self.winfo_height()
-        canvas.config(scrollregion=(-sw//2, -sh//2, sw//2, sh//2))
-
-    def _wait_for_scrollregion(self, t, initial, ct=10):
-        if (self.winfo_width(), self.winfo_height()) == (1, 1) and ct:
-            self.after(t, self._wait_for_scrollregion, t, initial, ct-1)
-        else:
-            self.set_scrollregion()
-
-    def _geo_wrapper(name, forget):
-        def wrapper(self, *args, **kwargs):
-            initial = self.winfo_width(), self.winfo_height()
-            getattr(super(), name)(*args, **kwargs)
-            self.container.widgets[1].grid(row=0, column=1, sticky=tk.NS)
-            self.after(0, self._wait_for_scrollregion, 1, initial)
-        wrapper.__name__ = name
-        def wrapper_forget(self):
-            getattr(self.container, forget)()
-        wrapper_forget.__name__ = forget
-        return wrapper, wrapper_forget
-
-    for name, forget in GEOMETRY_MANAGERS_FORGET:
-        locals()[name], locals()[forget] = _geo_wrapper(name, forget)
-    del _geo_wrapper
-
-
 class ScrollableWidget(tk.Widget):
     """Provide a scrollable widget.
 
