@@ -167,13 +167,13 @@ class BaseProxyWidget(tk.Widget):
                            )(*args, rcoords=self, **kwargs)
             for container in container_list:  # is an iterator
                 x, y = container.grid(row=y, column=x, rcoords=self)
-            tk.Widget.grid(self, row=y, column=x)
+            super().grid(self, row=y, column=x)
         def forgetter(self):
             container_list = reversed(self.container_list)
             getattr(next(container_list), forget)(self)
             for container in container_list:
                 container.grid_forget(self)
-            tk.Widget.grid_forget(self)
+            super().grid_forget(self)
         wrapper.__name__ = name
         forgetter.__name__ = forget
         return wrapper, forgetter
