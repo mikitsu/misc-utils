@@ -1,5 +1,6 @@
 """Django-like (in the sense of "class-based") forms for tkinter"""
 
+import inspect
 import tkinter as tk
 import tkinter.messagebox as tk_msg
 import misc.tk as mtk
@@ -20,7 +21,7 @@ class FormWidget(mtk.ContainingWidget):
         The widgets are expected to have a .validate() method returning
             a tuple consisting of a boolean indicating the validity of the data
             and the data itself or an error message,
-            such as the one provided by misc.Vaidator
+            such as the one provided by misc.Validator
         Alternatively, the widgets may provide a .get() method returning the data.
         Additional validation (e.g. checking if entries match)
             can be done by overriding the .clean_data() method"""
@@ -39,11 +40,15 @@ class FormWidget(mtk.ContainingWidget):
     def __init__(self, master, *widgets,
                  error_handle=ErrorHandle.LABEL|ErrorHandle.POPUP,
                  error_display_options={},
+                 submit_button=True,
+                 onsubmit=lambda data: None,
                  **container_options):
         """Create a form.
 
             `widgets` are (<key>, (<class>, <kwargs>)) of the contained widgets
-                The key is used in self.cleaned_data and self.errors
+                The key is used in self.widget_dict, self.data and self.errors
+                Note the default implementation of self.clean_data() ignres
+                widgets whose keys start with ignore
             `error_handle` is a flag from FormWidget.ErrorHandle.
                 See its __doc__ for details
             `error_display_options` are options for error display
@@ -54,6 +59,10 @@ class FormWidget(mtk.ContainingWidget):
                 'popup_title' the title for the popup
                 'popup_intro' the introducing text on the popup
                 'popup_field_name_resolver' callable to get the display name for a particular field
+            `submit_button` may be a dictionary containing options for an
+                automatically generated one, any other truthy value to
+                automatically generate a default one and  a falsey value to
+                suppress automatic generation of a button.
             `container_options` are passed along to ContainingWidget
 
             By default, the direction for the ContainingWidget is set to `tk.BOTTOM`
@@ -61,9 +70,11 @@ class FormWidget(mtk.ContainingWidget):
             See ContainingWidget.__init__ for more detais"""
         self.ERROR_LABEL_ID = object()
         self.error_handle = error_handle
+        self.onsubmit = onsubmit
         self.error_display_options = {'label_fg': 'red',
                                       'label_position': tk.RIGHT}
         self.error_display_options.update(error_display_options)
+        
         widget_keys = []
         pass_widgets = []
         for key, widget in widgets:
@@ -75,11 +86,17 @@ class FormWidget(mtk.ContainingWidget):
                            'label_id': self.ERROR_LABEL_ID})
             widget_keys.append(key)
             pass_widgets.append(widget)
+        
+        if submit_button:
+            sb_options = {'text': 'Submit', 'command': self.submit_action}
+            if isinstance(submit_button, dict):
+                sb_options.update(submit_button)
+            pass_widgets.append((tk.Button, sb_options))
         options = {'direction': (tk.BOTTOM, tk.RIGHT)}
         options.update(container_options)
+        
         super().__init__(master, *pass_widgets, **options)
-        self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
-            
+        self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}    
         
     def validate(self):
         """Validate the form data and, if applicable,
@@ -114,8 +131,12 @@ class FormWidget(mtk.ContainingWidget):
 
     def clean_data(self):
         """Use the .validate() methods of elements to validate form data.
-            Override to validate in a finer-grained way"""
+            Override to validate in a finer-grained way
+
+            Ignore elements whose keys start with 'ignore'"""
         for k, w in self.widget_dict.items():
+            if k.startswith('ignore'):
+                continue
             try:
                 validator = w.validate
             except AttributeError:
@@ -129,6 +150,10 @@ class FormWidget(mtk.ContainingWidget):
 
     def custom_error_handle(self):
         pass
+
+    def submit_action(self):
+        if self.validate():
+            self.onsubmit(self.data)
 
 
 class Form:
@@ -189,7 +214,11 @@ class Form:
             ...             if msg := self.check_email():
             ...                 self.errors['email'].add(msg)
             ...
-            ...         def check_username(self):
+            ...         def onsubmit(data):  # NOT self, it's used as argument
+            ...             print('hey, look at this', data)
+            ...             # do stuff
+            ...
+            ...         def check_username(self):  # these are just convenience methods
             ...             # lots of stuff here
             ...         def check_email(self):
             ...             # lots of stuff here
@@ -211,9 +240,9 @@ class Form:
         form_widget = getattr(cls, 'FormWidget', None)
         if form_widget:
             cls.__formwidget_options = {}
-            for k in ['error_handle', 'error_display_options']:
+            for k in inspect.getfullargspec(FormWidget.__init__).kwonlyargs:
                 try:
-                    self.formwidget_options[k] = getattr(form_widget, k)
+                    cls.__formwidget_options[k] = getattr(form_widget, k)
                 except AttributeError:
                     pass
             cls.__formwidget_options.update(getattr(FormWidget, 'options', {}))
