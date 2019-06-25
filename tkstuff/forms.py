@@ -24,7 +24,16 @@ class FormWidget(mtk.ContainingWidget):
             such as the one provided by misc.Validator
         Alternatively, the widgets may provide a .get() method returning the data.
         Additional validation (e.g. checking if entries match)
-            can be done by overriding the .clean_data() method"""
+            can be done by overriding the .clean_data() method
+
+        To validate the data, call the .validate() method.
+            This will use the .clean_data() method for getting data
+            and display any errors in the way specified in __init__
+            It returns a boolean indicating if all data is valid
+        After .validate() returned True, the data is available under.data
+
+        By default, the submit action calls onsubmit (passed as argument)
+            with the data if validation succeeds"""
     class ErrorHandle(enum.Flag):
         """Flags for how to display errors to the user
 
@@ -164,8 +173,11 @@ class Form:
 
         The FormWidget is created by calling the subclass passing the master widget"""
 
-    def __new__(cls, master):
-        return cls.__form_class(master, *cls.__widgets, **cls.__formwidget_options)
+    def __new__(cls, master, **options):
+        """Create a new form. `options` override the options defined in the form class"""
+        kwargs = cls.__formwidget_options.cpoy()
+        kwargs.update(options)
+        return cls.__form_class(master, *cls.__widgets, **kwargs)
     
     def __init_subclass__(cls, autogen_names=True):
         """Prepare a new form.
