@@ -3,7 +3,7 @@
 import inspect
 import tkinter as tk
 import tkinter.messagebox as tk_msg
-import misc.tk as mtk
+import misc.tkstuff as mtk
 
 try:
     import typing
@@ -51,6 +51,7 @@ class FormWidget(mtk.ContainingWidget):
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
+                 submit_binds=('<Return>',),
                  **container_options):
         """Create a form.
 
@@ -72,6 +73,8 @@ class FormWidget(mtk.ContainingWidget):
                 automatically generated one, any other truthy value to
                 automatically generate a default one and  a falsey value to
                 suppress automatic generation of a button.
+            `submit_bind` is an iterable of keysyms the form binds
+                the "Submit" action to.
             `container_options` are passed along to ContainingWidget
 
             By default, the direction for the ContainingWidget is set to `tk.BOTTOM`
@@ -105,7 +108,9 @@ class FormWidget(mtk.ContainingWidget):
         options.update(container_options)
         
         super().__init__(master, *pass_widgets, **options)
-        self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}    
+        self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
+        for keysym in submit_binds:
+            self.bae.bind(keysym, self.submit_action)
         
     def validate(self):
         """Validate the form data and, if applicable,
@@ -175,7 +180,7 @@ class Form:
 
     def __new__(cls, master, **options):
         """Create a new form. `options` override the options defined in the form class"""
-        kwargs = cls.__formwidget_options.cpoy()
+        kwargs = cls.__formwidget_options.copy()
         kwargs.update(options)
         return cls.__form_class(master, *cls.__widgets, **kwargs)
     
