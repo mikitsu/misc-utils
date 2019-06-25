@@ -51,7 +51,6 @@ class FormWidget(mtk.ContainingWidget):
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
-                 submit_binds=('<Return>',),
                  **container_options):
         """Create a form.
 
@@ -73,8 +72,6 @@ class FormWidget(mtk.ContainingWidget):
                 automatically generated one, any other truthy value to
                 automatically generate a default one and  a falsey value to
                 suppress automatic generation of a button.
-            `submit_bind` is an iterable of keysyms the form binds
-                the "Submit" action to.
             `container_options` are passed along to ContainingWidget
 
             By default, the direction for the ContainingWidget is set to `tk.BOTTOM`
@@ -109,8 +106,6 @@ class FormWidget(mtk.ContainingWidget):
         
         super().__init__(master, *pass_widgets, **options)
         self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
-        for keysym in submit_binds:
-            self.bae.bind(keysym, self.submit_action)
         
     def validate(self):
         """Validate the form data and, if applicable,
