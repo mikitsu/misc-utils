@@ -1,15 +1,21 @@
 """Some prepared widgets, forms and functions"""
 
 import tkinter as tk
-import misc.tk as mtk
-import misc.tk.forms as mtkf
+import misc
+import misc.tkstuff as mtk
+import misc.tkstuff.forms as mtkf
 
 class PasswordEntry(tk.Entry):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, show='*', **kwargs)
 
 
-IntEntry = mtk.ValidatedWidget.new_cls(tk.Entry, misc.Validator(int))
+def type_entry(cls):
+    return mtk.ValidatedWidget.new_cls(tk.Entry, misc.Validator(cls))
+
+
+IntEntry = type_entry(int)
+FloatEntry = type_entry(float)
 
 
 class LoginForm(mtkf.Form):
