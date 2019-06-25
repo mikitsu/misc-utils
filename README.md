@@ -15,3 +15,4 @@ Includes:
   - validated widgets
   - scrolled widgets
   - single widget for radion button groups (probably the most safe to use)
+  - FormWidget and an extensible factory
