@@ -14,5 +14,7 @@ Includes:
   - wrapping widgets
   - validated widgets
   - scrolled widgets
-  - single widget for radion button groups (probably the most safe to use)
+  - single widget for radio button groups (probably the most safe to use)
   - FormWidget and an extensible factory
+  - dialogs for forms and arbirtary widgets
+  - some pre-prepared cominations of the above: IntEntry, FloatEntry, PasswordEntry, LoginForm
