@@ -16,4 +16,4 @@ Includes:
   - scrolled widgets
   - single widget for radio button groups (probably the most safe to use)
   - FormWidget and an extensible factory
-  - some pre-prepared cominations of the above: IntEntry, FloatEntry, PassWordEntry, LoginForm
+  - some pre-prepared cominations of the above: IntEntry, FloatEntry, PasswordEntry, LoginForm
