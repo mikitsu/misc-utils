@@ -81,9 +81,13 @@ class Instance:
 
         To iterate, just iterate. This will yield a single Instance
         object whose lookup will yield an iterable over the different items.
+        NOTE: This also applies when creating e.g. a list, therefore always
+        continue with the first item:
+            instance_obj = list(instance_obj)[0]
+            instance_obj = [somefunc(x) for x in instance_obj][0]
         """
     CALLABLES = {k: getattr(builtins, k) for k in
-                 'len repr str bytes int float complex list tuple'.split()}
+                 'len repr str bytes int float complex'.split()}
 
     iter_flag = False
 
@@ -113,9 +117,10 @@ class Instance:
                 'stored_lookups')[_index:], _index):
             match = re.match(
                 '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
-                lkup)
+                a[0] if lkup == '__getattribute__' else '')
             if match:
-                raise NotImplementedError
+                func = Instance.CALLABLES[match.group(1)]
+                result = func(result)
             elif lkup == '__next__':
                 return (Instance.lookup(self, r, i+1) for r in result)
             else:
