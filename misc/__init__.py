@@ -91,7 +91,7 @@ class Instance:
 
     iter_flag = False
 
-    def __dunder_lookup(__name__=None):
+    def _dunder_lookup(__name__=None):
         def wrapper(self, *args, **kwargs):
             super().__getattribute__('stored_lookups').append(
                 (__name__, args, kwargs))
@@ -99,7 +99,7 @@ class Instance:
         wrapper.__name__ = __name__
         return wrapper
 
-    for __dunder_name in ('lt le eq ne gt ge call getitem setitem reversed '
+    for _dunder_name in ('lt le eq ne gt ge call getitem setitem reversed '
                          + 'add sub mul matmul truediv floordiv mod divmod '
                          + 'lshift rshift and xor radd rsub rmul rfloordiv '
                          + 'or pow rmatmul rtruediv rmod rdivmod rpow rand '
@@ -107,9 +107,9 @@ class Instance:
                          + 'imul itruediv ifloordiv imod ipow ilshift iand '
                          + 'irshift ixor ior neg pos abs invert round ciel '
                          + 'trunc floor setattr getattribute iter').split():
-        __dunder_name = '__{}__'.format(__dunder_name)
-        locals()[__dunder_name] = __dunder_lookup(__dunder_name)
-    del __dunder_lookup, __dunder_name
+        _dunder_name = '__{}__'.format(_dunder_name)
+        locals()[_dunder_name] = _dunder_lookup(_dunder_name)
+    del _dunder_lookup, _dunder_name
 
     def lookup(self, inst, _index=0):
         result = inst
