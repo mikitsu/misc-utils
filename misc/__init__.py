@@ -70,7 +70,8 @@ class Instance:
         This class allows for all lookup oparations on an object
         to be stored and executed at any later time
 
-        To perform the stored oparations, use the Instance.lookup(<instance>)
+        To perform the stored oparations, use the
+            Instance.lookup(<Instance object>, <real object>)
         method. DO NOT call it from the object.
 
         To pass the object through (built-in) functions at lookup time,
