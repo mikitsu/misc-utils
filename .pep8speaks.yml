@@ -1,12 +1,12 @@
 scanner:
-  linter: pycodestyle
+    linter: pycodestyle
 
 pycodestyle:
-  max-line-length: 85
-  ignore:
-    - W503  # line break before binary operator
-  exclude:
-    - __pycache__
+    max-line-length: 85
+    ignore:
+        - W503  # line break before binary operator
+    exclude:
+        - __pycache__
 
 no_blank_comment: False
 
