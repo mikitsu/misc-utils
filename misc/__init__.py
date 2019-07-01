@@ -88,6 +88,9 @@ class Instance:
         """
     CALLABLES = {k: getattr(builtins, k) for k in
                  'len repr str bytes int float complex'.split()}
+    CALLABLES.update({
+        'not': operator.not_,
+        })
 
     iter_flag = False
 
