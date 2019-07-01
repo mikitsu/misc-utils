@@ -1,8 +1,8 @@
 scanner:
-  - linter: pycodestyle
+  linter: pycodestyle
 
 pycodestyle:
-  - max-line-length: 85
+  max-line-length: 85
   ignore:
     - W504  # line break after binary operator
   exclude:
