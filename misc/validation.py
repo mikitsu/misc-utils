@@ -9,10 +9,14 @@ class MultiValidator:
         """Create a new MultiValidator
 
             `validators` are single validators to be chained"""
-        self.validators = list(validators)
+        self.validators = validators
 
     def __call__(self, value):
-        raise NotImplementedError
+        for validator in self.validators:
+            good, value = validator(value)
+            if not good:
+                return False, value
+        return True, value
 
 
 class ConditionValidator:
@@ -32,7 +36,10 @@ class ConditionValidator:
         self.conditions = conditions
 
     def __call__(self, value):
-        raise NotImplementedError
+        for cond, msg in self.conditions:
+            if not Instance.lookup(cond, value):
+                return False, msg
+        return True, value
 
 
 class TransformValidator:
@@ -45,22 +52,33 @@ class TransformValidator:
                 They may also be tuples of the form (<callable>, <config>)
                 where <callale> is the callable described above
                 and <config> is a mapping from exceptions that may occur
-                during the transformation to error messages.
-                The default maps ValueError to 'Must be of type <name>'
-                with <name> replaced by the callables __name__, making it
-                suitable for types.
+                during the transformation to error messages or tuples of
+                multiple such exceptions.
+                The default maps (ValueError, TypeError) to
+                'Must be of type <name>' with <name> replaced by
+                the callables __name__, making it suitable for types.
             """
         default_config = {ValueError: 'Must be of type {__name__}',
                          }
-        self.types = []
+        self.trans = []
         self.configs = []
-        for t in types:
+        for t in transformations:
             config = default_config.copy()
             if isinstance(t, tuple):
                 t, new_cnf = t
                 config.update(new_cnf)
-            self.types.append(t)
+            self.trans.append(t)
             self.configs.append(config)
 
     def __call__(self, value):
-        raise NotImplementedError
+        for trans, cnf in zip(self.trans, self.configs):
+            try:
+                value = trans(value)
+            except Exception as e:
+                for exc, msg in cnf.items():
+                    if isinstance(e, exc):
+                        return False, msg.format(__name__=trans.__name__,
+                                                 value=value,
+                                                 )
+                raise
+        return True, value
