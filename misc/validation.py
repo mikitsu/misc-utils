@@ -3,6 +3,40 @@
 from misc import Instance
 
 
+class Validator:
+    """Factory for a misc.validation.MultiValidator
+        that guesses which validator to use
+        """
+
+    def __new__(cls, *checks):
+        """Create a new mis.validation.MultiValidator guessing
+            which validator to use
+
+            `checks` are the arguments passed to the respective validator
+                which one is determined automatically.
+            """
+        checks = checks + (None,)
+        validators = []
+        current = None
+        stored = []
+        for check in checks:
+            if check is None:
+                val = None
+            elif callable(check):
+                val = TransformValidator
+            elif isinstance(check[0], Instance):
+                val = ConditionValidator
+            else:
+                val = TransformValidator
+            if val is not current:
+                if current is not None:
+                    validators.append(current(*stored))
+                current = val
+                stored = []
+            stored.append(check)
+        return MultiValidator(*validators)
+
+
 class MultiValidator:
     """Chain multiple validators"""
     def __init__(self, *validators):
