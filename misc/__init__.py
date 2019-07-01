@@ -77,7 +77,11 @@ class Instance:
         To pass the object through (built-in) functions at lookup time,
         access `__call_<function name>`. The function will be called with
         the object as sole argument. The functions are stored in the
-        CALLABLES attribute, a dict
+        CALLABLES attribute, a dict. `not` is also supported.
+
+        For the `in` as `is` lookups, call the `.__call_<is, in or contains>`
+        with the sppropriate argument. using `.__call_contains`
+        will swap the operands.
 
         To iterate, just iterate. This will yield a single Instance
         object whose lookup will yield an iterable over the different items.
@@ -90,6 +94,9 @@ class Instance:
                  'len repr str bytes int float complex'.split()}
     CALLABLES.update({
         'not': operator.not_,
+        'is': operator.is_,
+        'in': lambda a, b: operator.contains(b, a),
+        'contains': operator.contains,
         })
 
     iter_flag = False
@@ -102,32 +109,28 @@ class Instance:
         wrapper.__name__ = __name__
         return wrapper
 
-    for _dunder_name in ('lt le eq ne gt ge call getitem setitem reversed '
+    for _dunder_name in ('lt le eq ne gt ge trunc getitem setitem reversed '
                          + 'add sub mul matmul truediv floordiv mod divmod '
                          + 'lshift rshift and xor radd rsub rmul rfloordiv '
                          + 'or pow rmatmul rtruediv rmod rdivmod rpow rand '
                          + 'rlshift rrshift rxor ror iadd isub ior imatmul '
                          + 'imul itruediv ifloordiv imod ipow ilshift iand '
                          + 'irshift ixor ior neg pos abs invert round ciel '
-                         + 'trunc floor setattr getattribute iter').split():
+                         + 'call floor setattr iter').split():
         _dunder_name = '__{}__'.format(_dunder_name)
         locals()[_dunder_name] = _dunder_lookup(_dunder_name)
     del _dunder_lookup, _dunder_name
 
     def lookup(self, inst, _index=0):
         result = inst
-        for i, (lkup, a, kw) in enumerate(super().__getattribute__(
+        for i, (lkup, a1, a2) in enumerate(super().__getattribute__(
                 'stored_lookups')[_index:], _index):
-            match = re.match(
-                '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
-                a[0] if lkup == '__getattribute__' else '')
-            if match:
-                func = Instance.CALLABLES[match.group(1)]
-                result = func(result)
+            if lkup == '**call**':
+                result = Instance.CALLABLES[a1](result, *a2)
             elif lkup == '__next__':
                 return (Instance.lookup(self, r, i+1) for r in result)
             else:
-                result = getattr(result, lkup)(*a, **kw)
+                result = getattr(result, lkup)(*a1, **a2)
         return result
 
     def __next__(self):
@@ -142,6 +145,27 @@ class Instance:
 
     def __init__(self):
         super().__setattr__('stored_lookups', [])
+
+    def __getattribute__(self, name):
+        stored_lookups = super().__getattribute__('stored_lookups')
+        match = re.match(
+                '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
+                name)
+        if match:
+            name = match.group(1)
+            if name in ['in', 'is']:
+                return partial(Instance._call_with_arg,
+                               self,
+                               _name=name,
+                               _op=stored_lookups.append)
+            stored_lookups.append(('**call**', name, ()))
+        else:
+            stored_lookups.append(('__getattribute__', (name,), {}))
+        return self
+
+    def _call_with_arg(self, arg, _op, _name):
+        _op(('**call**', _name, (arg,)))
+        return self
 
 
 class Tree:
