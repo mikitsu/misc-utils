@@ -8,7 +8,13 @@ Includes:
   - various class wrappers
   - multiline input
   - a Tree
+  - a class for delayed lookup evaluation
 - a timer module, extensible but also working out of the box
+- in a validation module
+  - a general Validator (factory for the following)
+  - a condition-based Validator
+  - a conversion-based Validator
+  - a MultiValidator for combining the above
 - tkinter extensions (<del>may</del> probably will explode in your face):
   - container widgets
   - wrapping widgets
