@@ -149,8 +149,8 @@ class Instance:
     def __getattribute__(self, name):
         stored_lookups = super().__getattribute__('stored_lookups')
         match = re.match(
-                '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
-                name
+            '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
+            name
         )
         if match:
             name = match.group(1)
