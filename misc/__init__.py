@@ -97,7 +97,7 @@ class Instance:
         'is': operator.is_,
         'in': lambda a, b: operator.contains(b, a),
         'contains': operator.contains,
-        })
+    })
 
     iter_flag = False
 
@@ -128,7 +128,7 @@ class Instance:
             if lkup == '**call**':
                 result = Instance.CALLABLES[a1](result, *a2)
             elif lkup == '__next__':
-                return (Instance.lookup(self, r, i+1) for r in result)
+                return (Instance.lookup(self, r, i + 1) for r in result)
             else:
                 result = getattr(result, lkup)(*a1, **a2)
         return result
@@ -150,7 +150,8 @@ class Instance:
         stored_lookups = super().__getattribute__('stored_lookups')
         match = re.match(
                 '^__call_({})$'.format('|'.join(Instance.CALLABLES)),
-                name)
+                name
+        )
         if match:
             name = match.group(1)
             if name in ['in', 'is']:
