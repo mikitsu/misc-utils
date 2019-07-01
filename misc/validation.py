@@ -58,7 +58,7 @@ class TransformValidator:
                 'Must be of type <name>' with <name> replaced by
                 the callables __name__, making it suitable for types.
             """
-        default_config = {ValueError: 'Must be of type {__name__}',
+        default_config = {(ValueError, TypeError): 'Must be of type {__name__}',
                          }
         self.trans = []
         self.configs = []
