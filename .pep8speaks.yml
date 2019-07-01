@@ -4,7 +4,7 @@ scanner:
 pycodestyle:
   max-line-length: 85
   ignore:
-    - W504  # line break after binary operator
+    - W503  # line break before binary operator
   exclude:
     - __pycache__
 
