@@ -1,5 +1,6 @@
 """Validation"""
 
+import re
 from misc import Instance
 
 
@@ -26,6 +27,8 @@ class Validator:
                 val = TransformValidator
             elif isinstance(check[0], Instance):
                 val = ConditionValidator
+            elif isinstance(check[0], str):
+                val = RegexValidator
             else:
                 val = TransformValidator
             if val is not current:
@@ -91,17 +94,20 @@ class TransformValidator:
                 The default maps (ValueError, TypeError) to
                 'Must be of type <name>' with <name> replaced by
                 the callables __name__, making it suitable for types.
+
+                Note: if a config (even if empty) is supplied,
+                    it overrides the default.
             """
         default_config = {(ValueError, TypeError): 'Must be of type {__name__}'}
         self.trans = []
         self.configs = []
         for t in transformations:
-            config = default_config.copy()
             if isinstance(t, tuple):
                 t, new_cnf = t
-                config.update(new_cnf)
+                self.configs.append(new_cnf)
+            else:
+                self.configs.append(default_config)
             self.trans.append(t)
-            self.configs.append(config)
 
     def __call__(self, value):
         for trans, cnf in zip(self.trans, self.configs):
@@ -115,3 +121,33 @@ class TransformValidator:
                                                  )
                 raise
         return True, value
+
+
+class RegexValidator:
+    """Factory for TransformValidators validating by regex"""
+    class Error(Exception):
+        pass
+
+    def __new__(cls, *conditions):
+        """Create a new TransformValidator validating
+            the passed reular expressions
+
+            `conditions` are (<regex>, <error>, [<group>]), <group> being
+                optional, where <regex> is a regular expression in string form
+                and <error> is the error message to display on failure
+                of matching. <group> is the regex group to return.
+                The default (if not given) is 0, returning the whole match.
+
+            Note: while the verb "match" is used in this docstring,
+                the re.search functionality is actually used for the validation
+            """
+        def creator(regex, error, group=0):
+            def trans(value, _re=re.compile(regex), _group=group):
+                try:
+                    return _re.search(value).group(group)
+                except AttributeError:
+                    raise RegexValidator.Error from None
+
+            return trans, {RegexValidator.Error: error}
+
+        return TransformValidator(*[creator(*c) for c in conditions])
