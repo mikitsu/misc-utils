@@ -283,7 +283,7 @@ class Form:
             ...                   else (False, 'Length must be at least 6'))
         """
         type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)
-        
+
         def _get_element_data(name, thing):
             if issubclass(type_hints.get(name, type(None)), Element):
                 return getattr(type_hints[name], 'data', {})
@@ -292,7 +292,7 @@ class Form:
                     return thing._misc_tk_form_element_data
                 except AttributeError:
                     return None
-        
+
         form_widget = getattr(cls, 'FormWidget', None)
         if form_widget:
             cls.__formwidget_options = {}
@@ -311,7 +311,7 @@ class Form:
         else:
             cls.__form_class = FormWidget
             cls.__formwidget_options = {}
-        
+
         cls.__widgets = []
         name_getter = getattr(cls, 'get_name', lambda x: x)
         for name, value in cls.__dict__.items():
@@ -341,7 +341,7 @@ class Element:
         if thing is None:
             return type('ElementWithOptions', (cls,), {'data': options})
         elif isinstance(thing, type):
-            return type(thing.__name__+'FormElement',
+            return type(thing.__name__ + 'FormElement',
                         (thing,),
                         {'_misc_tk_form_element_data': options})
         else:
