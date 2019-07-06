@@ -370,7 +370,8 @@ def get_setter(widget, setter):
                 def setter(value):
                     widget.delete(0, tk.END)
                     widget.insert(0, value)
-            elif hasattr(widget, 'selection_set') and hasattr(widget, 'selection_clear'):
+            elif (hasattr(widget, 'selection_set')
+                  and hasattr(widget, 'selection_clear')):
                 def setter(value):
                     widget.selection_clear(0, tk.END)
                     widget.selection_set(value)
