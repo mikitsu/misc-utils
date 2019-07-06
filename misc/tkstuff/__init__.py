@@ -210,7 +210,6 @@ class BaseWrappedWidget(BaseProxyWidget):
             bases = (cls, main_cls)
         if main_cls.__new__ is object.__new__:
             def __new__(cls, *si, **nk):
-                print('sunk')
                 return object.__new__(cls)
         else:
             __new__  = main_cls.__new__
@@ -358,15 +357,17 @@ class ValidatedWidget(tk.Widget):
                 and may also be set on instances separately
             `getter` provides the name of the function to use for getting
                 input from the widget. If it is None, .get() and
-                .curselection() are tried"""
-        def __init__(self, master=None, cnf={}, validator=None, **kw):
+                .curselection() are tried
+        """
+        def __init__(self, *args, validator=None, **kw):
             """Initialize self.
 
                 if `validator` is not None, it overrides the default set in the class
-                all other arguments are passed to `widget.__init__`"""
+                all other arguments are passed to `widget.__init__`
+            """
             if validator is not None:
                 self.validator = validator
-            widget.__init__(self, master, cnf, **kw)
+            widget.__init__(self, *args, **kw)
         if getter is None:
             try:
                 getter = widget.get
