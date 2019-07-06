@@ -171,9 +171,23 @@ class FormWidget(mtk.ContainingWidget):
     def custom_error_handle(self):
         pass
 
-    def submit_action(self):
+    def submit_action(self, event=None):
         if self.validate():
             self.onsubmit(self.data)
+
+
+class ProtoWidget(tuple):
+    DEFAULT_DATA = {'groups': ()}
+
+    def __new__(cls, iterable=(), options={}):
+        self = super().__new__(cls, iterable)
+
+        data = cls.DEFAULT_DATA.copy()
+        data.update(options)
+        data['groups'] = set(data['groups'])
+        for k, v in data.items():
+            setattr(self, k, v)
+        return self
 
 
 class Form:
@@ -184,15 +198,18 @@ class Form:
 
         The FormWidget is created by calling the subclass passing the master widget"""
 
-    def __new__(cls, master, deactivate=(), **options):
+    def __new__(cls, master, deactivate=(), ex_groups=(), **options):
         """Create a new form.
 
             `options` override the options defined in the form class
             `deactivate` is a container of widget keys to exclude
+            `ex_groups` is an iterable of widget groups to exclude
         """
+        ex_groups = set(ex_groups)
         kwargs = cls.__formwidget_options.copy()
         kwargs.update(options)
-        widgets = [w for w in cls.__widgets if w[0] not in deactivate]
+        widgets = [w for w in cls.__widgets if
+                   (w[0] not in deactivate and not w.groups & ex_groups)]
         return cls.__form_class(master, *widgets, **kwargs)
     
     def __init_subclass__(cls, autogen_names=True):
@@ -264,7 +281,18 @@ class Form:
             ...     password: forms.Element = ValidatedEntry(
             ...         lambda p: (True, p) if len(p) > 5
             ...                   else (False, 'Length must be at least 6'))
-            """
+        """
+        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)
+
+        def _get_element_data(name, thing):
+            if issubclass(type_hints.get(name, type(None)), Element):
+                return getattr(type_hints[name], 'data', {})
+            else:
+                try:
+                    return thing._misc_tk_form_element_data
+                except AttributeError:
+                    return None
+
         form_widget = getattr(cls, 'FormWidget', None)
         if form_widget:
             cls.__formwidget_options = {}
@@ -284,27 +312,37 @@ class Form:
             cls.__form_class = FormWidget
             cls.__formwidget_options = {}
 
-        if hasattr(typing, 'get_type_hints'):
-            elems = [k for k, v in typing.get_type_hints(cls).items()
-                     if v is Element]
-        else:
-            elems = ()
         cls.__widgets = []
         name_getter = getattr(cls, 'get_name', lambda x: x)
         for name, value in cls.__dict__.items():
-            if name in elems or hasattr(value, '_misc_tk_form_element_flag'):
-                if not hasattr(value, 'validate'):
-                    value = mtk.ValidatedWidget.new_cls(value, lambda x: (True, x))
-                widget = (value, {})
-                if autogen_names:
-                    widget = (mtk.LabeledWidget, {
-                        'widget': widget,
-                        'text': name_getter(name)})
-                cls.__widgets.append((name, widget))
+            data = _get_element_data(name, value)
+            if data is None:
+                continue
+            if not hasattr(value, 'validate'):
+                value = mtk.ValidatedWidget.new_cls(value, lambda x: (True, x))
+            widget = (value, {})
+            if autogen_names:
+                widget = (mtk.LabeledWidget, {
+                    'widget': widget,
+                    'text': name_getter(name),
+                    'label_id': '{}-{}-label'.format(cls, value)})
+            cls.__widgets.append(ProtoWidget((name, widget), data))
 
 
 class Element:
-    """A form element. Use as an annotation or as type (adds a flag)"""
-    def __new__(cls, thing):
-        thing._misc_tk_form_element_flag = None
-        return thing
+    """A form element. Use as an annotation or as type (will create a subclass)"""
+    def __new__(cls, thing=None, **options):
+        """Mark as form element. May include options used by Form
+
+            currently the only option:
+            `groups` is a container of the groups the element belongs to.
+                see Form.__new__ fro information on how to use them
+        """
+        if thing is None:
+            return type('ElementWithOptions', (cls,), {'data': options})
+        elif isinstance(thing, type):
+            return type(thing.__name__ + 'FormElement',
+                        (thing,),
+                        {'_misc_tk_form_element_data': options})
+        else:
+            raise TypeError('To use with widget classes')
