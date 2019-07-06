@@ -173,11 +173,16 @@ class Form:
 
         The FormWidget is created by calling the subclass passing the master widget"""
 
-    def __new__(cls, master, **options):
-        """Create a new form. `options` override the options defined in the form class"""
+    def __new__(cls, master, deactivate=(), **options):
+        """Create a new form.
+
+            `options` override the options defined in the form class
+            `deactivate` is a container of widget keys to exclude
+        """
         kwargs = cls.__formwidget_options.copy()
         kwargs.update(options)
-        return cls.__form_class(master, *cls.__widgets, **kwargs)
+        widgets = [w for w in cls.__widgets if w[0] not in deactivate]
+        return cls.__form_class(master, *widgets, **kwargs)
     
     def __init_subclass__(cls, autogen_names=True):
         """Prepare a new form.
