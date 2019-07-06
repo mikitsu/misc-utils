@@ -51,12 +51,13 @@ class FormWidget(mtk.ContainingWidget):
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
+                 default_content={},
                  **container_options):
         """Create a form.
 
             `widgets` are (<key>, (<class>, <kwargs>)) of the contained widgets
                 The key is used in self.widget_dict, self.data and self.errors
-                Note the default implementation of self.clean_data() ignres
+                Note the default implementation of self.clean_data() ignores
                 widgets whose keys start with ignore
             `error_handle` is a flag from FormWidget.ErrorHandle.
                 See its __doc__ for details
@@ -72,6 +73,13 @@ class FormWidget(mtk.ContainingWidget):
                 automatically generated one, any other truthy value to
                 automatically generate a default one and  a falsey value to
                 suppress automatic generation of a button.
+            `onsubmit` is a callable taking the forms data if the submit_action
+                is triggered and self.validate() returned True.
+                If finer-grained control over the process is wished,
+                overriding `.submit_action` may be more appropriate.
+            `default_content` is a mapping from field names to
+                their default content for this form. The fields must
+                have a setting method recognized by misc.tkstuff.get_setter.
             `container_options` are passed along to ContainingWidget
 
             By default, the direction for the ContainingWidget is set to `tk.BOTTOM`
@@ -106,6 +114,9 @@ class FormWidget(mtk.ContainingWidget):
         
         super().__init__(master, *pass_widgets, **options)
         self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
+
+        for k, v in default_content:
+            mtk.get_setter(self.widget_dict[k])(v)
         
     def validate(self):
         """Validate the form data and, if applicable,
