@@ -265,6 +265,17 @@ class Form:
             ...         lambda p: (True, p) if len(p) > 5
             ...                   else (False, 'Length must be at least 6'))
             """
+        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)
+        
+        def _get_element_data(name, thing):
+            if issubclass(type_hints.get(name, type(None)), Element):
+                return getattr(type_hints[name], 'data', {})
+            else:
+                try:
+                    return thing._misc_tk_form_element_data
+                except AttributeError:
+                    return None
+        
         form_widget = getattr(cls, 'FormWidget', None)
         if form_widget:
             cls.__formwidget_options = {}
@@ -283,28 +294,29 @@ class Form:
         else:
             cls.__form_class = FormWidget
             cls.__formwidget_options = {}
-
-        if hasattr(typing, 'get_type_hints'):
-            elems = [k for k, v in typing.get_type_hints(cls).items()
-                     if v is Element]
-        else:
-            elems = ()
+        
         cls.__widgets = []
         name_getter = getattr(cls, 'get_name', lambda x: x)
         for name, value in cls.__dict__.items():
-            if name in elems or hasattr(value, '_misc_tk_form_element_flag'):
-                if not hasattr(value, 'validate'):
-                    value = mtk.ValidatedWidget.new_cls(value, lambda x: (True, x))
-                widget = (value, {})
-                if autogen_names:
-                    widget = (mtk.LabeledWidget, {
-                        'widget': widget,
-                        'text': name_getter(name)})
-                cls.__widgets.append((name, widget))
+            data = _get_element_data(name, value)
+            if data is None:
+                continue
+            if not hasattr(value, 'validate'):
+                value = mtk.ValidatedWidget.new_cls(value, lambda x: (True, x))
+            widget = (value, {})
+            if autogen_names:
+                widget = (mtk.LabeledWidget, {
+                    'widget': widget,
+                    'text': name_getter(name)})
+            cls.__widgets.append((name, widget))
 
 
 class Element:
-    """A form element. Use as an annotation or as type (adds a flag)"""
-    def __new__(cls, thing):
-        thing._misc_tk_form_element_flag = None
-        return thing
+    """A form element. Use as an annotation or as type (adds an attribute)"""
+    def __new__(cls, thing=None, **options):
+        """Mark as form element. May include options used by Form"""
+        if thing is None:
+            return type('ElementWithOptions', (cls,), {'data': options})
+        else:
+            thing._misc_tk_form_element_data = options
+            return thing
