@@ -47,7 +47,7 @@ class FormWidget(mtk.ContainingWidget):
         CUSTOM = enum.auto()
 
     def __init__(self, master, *widgets,
-                 error_handle=ErrorHandle.LABEL|ErrorHandle.POPUP,
+                 error_handle=ErrorHandle.LABEL | ErrorHandle.POPUP,
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
@@ -91,7 +91,7 @@ class FormWidget(mtk.ContainingWidget):
         self.error_display_options = {'label_fg': 'red',
                                       'label_position': tk.RIGHT}
         self.error_display_options.update(error_display_options)
-        
+
         widget_keys = []
         pass_widgets = []
         for key, widget in widgets:
@@ -103,7 +103,7 @@ class FormWidget(mtk.ContainingWidget):
                            'label_id': self.ERROR_LABEL_ID})
             widget_keys.append(key)
             pass_widgets.append(widget)
-        
+
         if submit_button:
             sb_options = {'text': 'Submit', 'command': self.submit_action}
             if isinstance(submit_button, dict):
@@ -111,17 +111,17 @@ class FormWidget(mtk.ContainingWidget):
             pass_widgets.append((tk.Button, sb_options))
         options = {'direction': (tk.BOTTOM, tk.RIGHT)}
         options.update(container_options)
-        
+
         super().__init__(master, *pass_widgets, **options)
         self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
 
         for k, v in default_content:
             mtk.get_setter(self.widget_dict[k])(v)
-        
+
     def validate(self):
         """Validate the form data and, if applicable,
             display errors according to self.error_handle
-            
+
             Return a boolean indicating the validity of the entered data
             After the call, the processsed data is availabe under self.data"""
         self.data = {}
@@ -224,7 +224,7 @@ class Form:
         widgets = [w for w in cls.__widgets if
                    (w[0] not in deactivate and not w.groups & ex_groups)]
         return cls.__form_class(master, *widgets, **kwargs)
-    
+
     def __init_subclass__(cls, autogen_names=True, template=False):
         """Prepare a new form.
 
@@ -234,7 +234,7 @@ class Form:
             If the `template` argument is true, only store the widgets for the
                 given form elements. They will be used as soon as a
                 non-template subclass is created. See Form.__doc__
-            
+
             options for the FormWidget may be stored in a FormWidget nested class
                 this applies to initialisation options and method overriding
                 all data is available in the methods
@@ -263,7 +263,7 @@ class Form:
             >>> import misc.tk as mtk
             >>> import tkinter as tk
             >>> from functools import partial
-            
+
             >>> class MyRegisterForm(forms.Form):
             ...     class FormWidget:  # no need to explicitly inherit
             ...         error_handle = forms.FormWidget.ErrorHandle.LABEL
@@ -313,7 +313,7 @@ class Form:
                 else:
                     widgets.extend(new_widgets)
             cls.__widgets = widgets
-    
+
     @classmethod
     def __get_widgets(cls, autogen_names):
         def _get_element_data(name, thing):
@@ -325,7 +325,7 @@ class Form:
                 except AttributeError:
                     return None
 
-        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)                
+        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)
         widgets = []
         name_getter = getattr(cls, 'get_name', lambda x: x)
         for name, value in cls.__dict__.items():
@@ -360,8 +360,8 @@ class Form:
                 cls.__form_class = form_widget
             else:
                 cls.__form_class = type(form_widget.__name__,
-                                       (form_widget, FormWidget),
-                                       {})
+                                        (form_widget, FormWidget),
+                                        {})
         else:
             cls.__form_class = FormWidget
             cls.__formwidget_options = {}
