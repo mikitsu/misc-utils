@@ -71,7 +71,7 @@ class FormWidget(mtk.ContainingWidget):
                 'popup_field_name_resolver' callable to get the display name for a particular field
             `submit_button` may be a dictionary containing options for an
                 automatically generated one, any other truthy value to
-                automatically generate a default one and  a falsey value to
+                automatically generate a default one and a falsey value to
                 suppress automatic generation of a button.
             `onsubmit` is a callable taking the forms data if the submit_action
                 is triggered and self.validate() returned True.
@@ -196,7 +196,20 @@ class Form:
         May be created by subclassing.
         See __init_subclass__ for more information
 
-        The FormWidget is created by calling the subclass passing the master widget"""
+        The FormWidget is created by calling the subclass passing the master widget
+
+        Templates are supported. They are created by passing `template=True`
+        to the class creation. A template may contain elements
+        and helper methods like any other form, but cannot be used as a
+        factory. It can be used as a superclass for more secialised forms.
+        In this case, it is not neccessary fot the form to explicitly
+        inherit from `Form`.
+        By default, the elements of a template are positioned after
+        the elements of the using form. To override this, place the
+        assignment `_position_over_ = True` in the template body.
+        If templates are used for other templates, the `template=True`
+        argument must be passed for each class definition.
+    """
 
     def __new__(cls, master, deactivate=(), ex_groups=(), **options):
         """Create a new form.
@@ -212,17 +225,21 @@ class Form:
                    (w[0] not in deactivate and not w.groups & ex_groups)]
         return cls.__form_class(master, *widgets, **kwargs)
     
-    def __init_subclass__(cls, autogen_names=True):
+    def __init_subclass__(cls, autogen_names=True, template=False):
         """Prepare a new form.
 
             elements are marked by Element (as annotation or type)
             Store the elements internally for use.
+
+            If the `template` argument is true, only store the widgets for the
+                given form elements. They will be used as soon as a
+                non-template subclass is created. See Form.__doc__
             
             options for the FormWidget may be stored in a FormWidget nested class
                 this applies to initialisation options and method overriding
                 all data is available in the methods
                 Note: the **options keyword arguments should be stored
-                    in a mapping, not separately
+                    in a mapping with the corresponding name, not separately
 
             the FormWidget nested class is used as class for the widget;
                 inheritance is added if not already present
@@ -282,8 +299,23 @@ class Form:
             ...         lambda p: (True, p) if len(p) > 5
             ...                   else (False, 'Length must be at least 6'))
         """
-        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)
+        cls.__widgets = cls.__get_widgets(autogen_names)
+        if not template:
+            cls.__set_formwidget_prefs()
 
+            widgets = []
+            for cls_in_mro in cls.__mro__:
+                if cls_in_mro is Form:
+                    break
+                new_widgets = cls_in_mro.__widgets
+                if getattr(cls_in_mro, '_position_over_', False):
+                    widgets = new_widgets + widgets
+                else:
+                    widgets.extend(new_widgets)
+            cls.__widgets = widgets
+    
+    @classmethod
+    def __get_widgets(cls, autogen_names):
         def _get_element_data(name, thing):
             if issubclass(type_hints.get(name, type(None)), Element):
                 return getattr(type_hints[name], 'data', {})
@@ -293,26 +325,8 @@ class Form:
                 except AttributeError:
                     return None
 
-        form_widget = getattr(cls, 'FormWidget', None)
-        if form_widget:
-            cls.__formwidget_options = {}
-            for k in inspect.getfullargspec(FormWidget.__init__).kwonlyargs:
-                try:
-                    cls.__formwidget_options[k] = getattr(form_widget, k)
-                except AttributeError:
-                    pass
-            cls.__formwidget_options.update(getattr(FormWidget, 'options', {}))
-            if FormWidget in form_widget.mro():
-                cls.__form_class = form_widget
-            else:
-                cls.__form_class = type(form_widget.__name__,
-                                       (form_widget, FormWidget),
-                                       {})
-        else:
-            cls.__form_class = FormWidget
-            cls.__formwidget_options = {}
-
-        cls.__widgets = []
+        type_hints = getattr(typing, 'get_type_hints', lambda c: {})(cls)                
+        widgets = []
         name_getter = getattr(cls, 'get_name', lambda x: x)
         for name, value in cls.__dict__.items():
             data = _get_element_data(name, value)
@@ -326,7 +340,31 @@ class Form:
                     'widget': widget,
                     'text': name_getter(name),
                     'label_id': '{}-{}-label'.format(cls, value)})
-            cls.__widgets.append(ProtoWidget((name, widget), data))
+            widgets.append(ProtoWidget((name, widget), data))
+        return widgets
+
+    @classmethod
+    def __set_formwidget_prefs(cls):
+        form_widget = getattr(cls, 'FormWidget', None)
+        if form_widget:
+            cls.__formwidget_options = {}
+            argspec = inspect.getfullargspec(FormWidget.__init__)
+            for k in argspec.kwonlyargs:
+                try:
+                    cls.__formwidget_options[k] = getattr(form_widget, k)
+                except AttributeError:
+                    pass
+            cls.__formwidget_options.update(
+                getattr(FormWidget, argspec.varkw, {}))
+            if FormWidget in form_widget.mro():
+                cls.__form_class = form_widget
+            else:
+                cls.__form_class = type(form_widget.__name__,
+                                       (form_widget, FormWidget),
+                                       {})
+        else:
+            cls.__form_class = FormWidget
+            cls.__formwidget_options = {}
 
 
 class Element:
