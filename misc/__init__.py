@@ -91,7 +91,7 @@ class Instance:
             instance_obj = [somefunc(x) for x in instance_obj][0]
         """
     CALLABLES = {k: getattr(builtins, k) for k in
-                 'len repr str bytes int float complex'.split()}
+                 'len repr str bytes int float bool complex'.split()}
     CALLABLES.update({
         'not': operator.not_,
         'is': operator.is_,
