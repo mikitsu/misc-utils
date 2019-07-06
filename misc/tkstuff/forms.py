@@ -332,9 +332,13 @@ class Form:
             data = _get_element_data(name, value)
             if data is None:
                 continue
+            if isinstance(value, tuple):
+                value, options = value
+            else:
+                options = {}
             if not hasattr(value, 'validate'):
                 value = mtk.ValidatedWidget.new_cls(value, lambda x: (True, x))
-            widget = (value, {})
+            widget = (value, options)
             if autogen_names:
                 widget = (mtk.LabeledWidget, {
                     'widget': widget,
