@@ -454,3 +454,41 @@ class VarWidget:
         """
         return cls.new_cls(widget, **var_kw)(
             master, *widget_kw.pop('*args', ()), **widget_kw)
+
+
+class OptionChoiceWidget(tk.OptionMenu):
+    """An Optionmenu with a its own variable"""
+    def __init__(self, master, values, default=0, var_type=tk.Variable, **kw):
+        """Create a new OptionChoiceWidget
+
+            `master` is passed
+            `values` is a sequence of (<code>, <dispaly>) where <code>
+                is returned bu .get() and <display> is shown to the user.
+                alternatively, it may be a sequence of strings in which case
+                the strings are shown and .get() returns the index
+            `default` is the index of the element to show by default
+                or a string (like "please select") to show before any selection
+            `var_type` is a callable (e.g. class) used to create the variable
+            `kw` are passed
+        """
+        if values:
+            if isinstance(values[0], str):
+                values = enumerate(values)
+        self.codes = {}
+        vals_to_pass = []
+        for c, d in values:
+            self.codes[d] = c
+            vals_to_pass.append(d)
+        if not isinstance(default, str):
+            default = vals_to_pass[default]
+        self.variable = var_type(master)
+        super().__init__(master, self.variable, default, *vals_to_pass, **kw)
+
+    def get(self):
+        """get the current value code"""
+        return self.codes[self.variable.get()]
+
+    def set(self, value):
+        """set the current value code"""
+        # this is more expensive, but I don;t expect high usage
+        self.variable.set({v: k for k, v in self.codes.itmes()}[value])
