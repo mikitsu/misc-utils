@@ -433,13 +433,14 @@ class VarWidget:
         """
         def __init__(self, master, *args, **kwargs):
             self.variable = variable_type(master)
-            self.get = self.variable.get
-            self.set = self.variable.set
             super(r, self).__init__(master, *args, **kwargs)
 
         r = type('{}WithVar'.format(widget.__name__),
                  (widget,),
-                 {'__init__': __init__})
+                 {'__init__': __init__
+                  'get': lambda s: s.varaible.get(),
+                  'set': lambda s, v: s.varaible.set(v)}
+                 )
         return r
 
     @classmethod
