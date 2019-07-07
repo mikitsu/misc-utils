@@ -419,5 +419,38 @@ class RadioChoiceWidget(ContainingWidget):  # yay, no class creation magic, just
 
     def get(self):
         return self.var.get()
-        
 
+
+class VarWidget:
+    """A widget with attached variable, exposed through methods on the widget"""
+
+    @staticmethod
+    def new_cls(widget, variable_type=tk.Variable):
+        """Create a new subclass and return it
+
+            `widget` is the widget class
+            `varibale_type` is the class to use for the variable
+        """
+        def __init__(self, master, *args, **kwargs):
+            self.variable = variable_type(master)
+            self.get = self.variable.get
+            self.set = self.variable.set
+            super(r, self).__init__(master, *args, **kwargs)
+
+        r = type('{}WithVar'.format(widget.__name__),
+                 (widget,),
+                 {'__init__': __init__})
+        return r
+
+    @classmethod
+    def new(cls, master, widget, widgetkw, **var_kw):
+        """Create a new widget instance directly
+
+            `master` is passed
+            `widget` is the widget class
+            `widgetkw` is a mapping of keyword-arguments for the widgte
+                the key '*args' may contain positional arguments
+            `var_kw` are keyword arguments to be passed to VarWidget.new_cls
+        """
+        return cls.new_cls(widget, **var_kw)(
+            master, *widget_kw.pop('*args', ()), **widget_kw)

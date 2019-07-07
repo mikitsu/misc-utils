@@ -17,6 +17,8 @@ def type_entry(cls):
 IntEntry = type_entry(int)
 FloatEntry = type_entry(float)
 
+CheckbuttonWithVar = mtk.VarWidget.new_cls(tk.Checkbutton, tk.BooleanVar)
+
 
 class LoginForm(mtkf.Form):
     username: mtkf.Element = tk.Entry
