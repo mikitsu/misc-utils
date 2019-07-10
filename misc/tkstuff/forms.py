@@ -47,7 +47,7 @@ class FormWidget(mtk.ContainingWidget):
         CUSTOM = enum.auto()
 
     def __init__(self, master, *widgets,
-                 error_handle=ErrorHandle.LABEL | ErrorHandle.POPUP,
+                 error_handle=ErrorHandle.LABEL|ErrorHandle.POPUP,
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
@@ -238,11 +238,11 @@ class Form:
             options for the FormWidget may be stored in a FormWidget nested class
                 this applies to initialisation options and method overriding
                 all data is available in the methods
-                Note: the **options keyword arguments should be stored
+                Note: the ** keyword arguments should be stored
                     in a mapping with the corresponding name, not separately
 
             the FormWidget nested class is used as class for the widget;
-                inheritance is added if not already present
+                inheritance is added if not already present.
 
             An element is a class and will be initialised with its master
                 widget. To add custom arguments (such as colors or fonts),
@@ -300,9 +300,8 @@ class Form:
             ...                   else (False, 'Length must be at least 6'))
         """
         cls.__widgets = cls.__get_widgets(autogen_names)
+        cls.__set_formwidget_prefs()
         if not template:
-            cls.__set_formwidget_prefs()
-
             widgets = []
             for cls_in_mro in cls.__mro__:
                 if cls_in_mro is Form:
@@ -349,10 +348,12 @@ class Form:
 
     @classmethod
     def __set_formwidget_prefs(cls):
-        form_widget = getattr(cls, 'FormWidget', None)
+        form_widget = vars(cls).get('FormWidget')
         if form_widget:
-            cls.__formwidget_options = {}
             argspec = inspect.getfullargspec(FormWidget.__init__)
+            # if we subclass a template, don't overwrite unless explicitly
+            cls.__formwidget_options = getattr(
+                cls, '_Form__formwidget_options', {}).copy()
             for k in argspec.kwonlyargs:
                 try:
                     cls.__formwidget_options[k] = getattr(form_widget, k)
@@ -360,13 +361,9 @@ class Form:
                     pass
             cls.__formwidget_options.update(
                 getattr(FormWidget, argspec.varkw, {}))
-            if FormWidget in form_widget.mro():
-                cls.__form_class = form_widget
-            else:
-                cls.__form_class = type(form_widget.__name__,
-                                        (form_widget, FormWidget),
-                                        {})
-        else:
+            bases = (form_widget, getattr(cls, '_Form__form_class', FormWidget))
+            cls.__form_class = type(form_widget.__name__, bases, {})
+        elif not hasattr(cls, '_Form__form_class'):
             cls.__form_class = FormWidget
             cls.__formwidget_options = {}
 
