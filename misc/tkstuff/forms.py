@@ -47,7 +47,7 @@ class FormWidget(mtk.ContainingWidget):
         CUSTOM = enum.auto()
 
     def __init__(self, master, *widgets,
-                 error_handle=ErrorHandle.LABEL|ErrorHandle.POPUP,
+                 error_handle=ErrorHandle.LABEL | ErrorHandle.POPUP,
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
