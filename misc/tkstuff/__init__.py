@@ -343,7 +343,43 @@ class ScrollableWidget(tk.Widget):
         NewClass.__qualname__ = '.'.join(NewClass.__qualname__.rsplit('.', 1)[:-1]
                                          +[NewClass.__name__])
         return NewClass
-        
+
+
+def get_getter(widget, getter):
+    if getter is None:
+        try:
+            return widget.get
+        except AttributeError:
+            try:
+                return widget.curselection
+            except AttributeError:
+                raise AttributeError('Neither a .get() nor a .curselection()'
+                                     ' were found. Please specify its name '
+                                     'in `getter`')
+    else:
+        return getattr(widget, getter)
+
+
+def get_setter(widget, setter):
+    if setter is None:
+        try:
+            return widget.set
+        except AttributeError:
+            if hasattr(widget, 'insert') and hasattr(widget, 'delete'):
+                def setter(value):
+                    widget.delete(0, tk.END)
+                    widget.insert(0, value)
+            elif (hasattr(widget, 'selection_set')
+                  and hasattr(widget, 'selection_clear')):
+                def setter(value):
+                    widget.selection_clear(0, tk.END)
+                    widget.selection_set(value)
+            else:
+                raise AttributeError('No valid conbination of methods was found.'
+                                     ' Please specify the name of the method.')
+            return setter
+    else:
+        return getattr(widget, setter)
 
 
 class ValidatedWidget(tk.Widget):
@@ -384,7 +420,7 @@ class ValidatedWidget(tk.Widget):
                        (cls, widget),
                        {'__new__': object.__new__,
                         '__init__': __init__,
-                        'getter': getter,
+                        'getter': get_getter(widget, getter),
                         'validator': staticmethod(validator)}
                        )
 
