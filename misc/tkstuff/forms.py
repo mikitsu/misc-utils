@@ -177,7 +177,7 @@ class FormWidget(mtk.ContainingWidget):
 
 
 class ProtoWidget(tuple):
-    DEFAULT_DATA = {'groups': ()}
+    DEFAULT_DATA = {'groups': (), 'opt': 'out'}
 
     def __new__(cls, iterable=(), options={}):
         self = super().__new__(cls, iterable)
@@ -188,6 +188,10 @@ class ProtoWidget(tuple):
         for k, v in data.items():
             setattr(self, k, v)
         return self
+
+    def use(self, widgets, groups):
+        return bool(self[0] in widgets or self.groups & groups
+                    ) ^ (self.opt == 'out')
 
 
 class Form:
@@ -211,18 +215,19 @@ class Form:
         argument must be passed for each class definition.
     """
 
-    def __new__(cls, master, deactivate=(), ex_groups=(), **options):
+    def __new__(cls, master, elements=(), groups=(), **options):
         """Create a new form.
 
             `options` override the options defined in the form class
-            `deactivate` is a container of widget keys to exclude
-            `ex_groups` is an iterable of widget groups to exclude
+            `elements` is a container of widget keys to opt in/out*
+            `groups` is an iterable of widget groups to opt in/out*
+
+            * depending on setting in element definition
         """
-        ex_groups = set(ex_groups)
+        groups = set(groups)
         kwargs = cls.__formwidget_options.copy()
         kwargs.update(options)
-        widgets = [w for w in cls.__widgets if
-                   (w[0] not in deactivate and not w.groups & ex_groups)]
+        widgets = [w for w in cls.__widgets if w.use(elements, groups)]
         return cls.__form_class(master, *widgets, **kwargs)
 
     def __init_subclass__(cls, autogen_names=True, template=False):
