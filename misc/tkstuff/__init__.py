@@ -210,7 +210,6 @@ class BaseWrappedWidget(BaseProxyWidget):
             bases = (cls, main_cls)
         if main_cls.__new__ is object.__new__:
             def __new__(cls, *si, **nk):
-                print('sunk')
                 return object.__new__(cls)
         else:
             __new__  = main_cls.__new__
@@ -394,15 +393,29 @@ class ValidatedWidget(tk.Widget):
                 and may also be set on instances separately
             `getter` provides the name of the function to use for getting
                 input from the widget. If it is None, .get() and
-                .curselection() are tried"""
-        def __init__(self, master=None, cnf={}, validator=None, **kw):
+                .curselection() are tried
+        """
+        def __init__(self, *args, validator=None, **kw):
             """Initialize self.
 
                 if `validator` is not None, it overrides the default set in the class
-                all other arguments are passed to `widget.__init__`"""
+                all other arguments are passed to `widget.__init__`
+            """
             if validator is not None:
                 self.validator = validator
-            widget.__init__(self, master, cnf, **kw)
+            widget.__init__(self, *args, **kw)
+        if getter is None:
+            try:
+                getter = widget.get
+            except AttributeError:
+                try:
+                    getter = widget.curselection
+                except AttributeError:
+                    raise AttributeError('Neither a .get() nor a .curselection()'
+                                         ' were found. Please specify its name '
+                                         'in `getter`')
+        else:
+            getter = getattr(widget, getter)
         return type('Validated{}Widget'.format(widget.__name__),
                        (cls, widget),
                        {'__new__': object.__new__,
@@ -442,5 +455,77 @@ class RadioChoiceWidget(ContainingWidget):  # yay, no class creation magic, just
 
     def get(self):
         return self.var.get()
-        
 
+
+class VarWidget:
+    """A widget with attached variable, exposed through methods on the widget"""
+
+    @staticmethod
+    def new_cls(widget, variable_type=tk.Variable):
+        """Create a new subclass and return it
+
+            `widget` is the widget class
+            `varibale_type` is the class to use for the variable
+        """
+        def __init__(self, master, *args, **kwargs):
+            self.variable = variable_type(master)
+            super(r, self).__init__(master, *args, **kwargs)
+
+        r = type('{}WithVar'.format(widget.__name__),
+                 (widget,),
+                 {'__init__': __init__
+                  'get': lambda s: s.varaible.get(),
+                  'set': lambda s, v: s.varaible.set(v)}
+                 )
+        return r
+
+    @classmethod
+    def new(cls, master, widget, widgetkw, **var_kw):
+        """Create a new widget instance directly
+
+            `master` is passed
+            `widget` is the widget class
+            `widgetkw` is a mapping of keyword-arguments for the widgte
+                the key '*args' may contain positional arguments
+            `var_kw` are keyword arguments to be passed to VarWidget.new_cls
+        """
+        return cls.new_cls(widget, **var_kw)(
+            master, *widget_kw.pop('*args', ()), **widget_kw)
+
+
+class OptionChoiceWidget(tk.OptionMenu):
+    """An Optionmenu with a its own variable"""
+    def __init__(self, master, values, default=0, var_type=tk.Variable, **kw):
+        """Create a new OptionChoiceWidget
+
+            `master` is passed
+            `values` is a sequence of (<code>, <dispaly>) where <code>
+                is returned bu .get() and <display> is shown to the user.
+                alternatively, it may be a sequence of strings in which case
+                the strings are shown and .get() returns the index
+            `default` is the index of the element to show by default
+                or a string (like "please select") to show before any selection
+            `var_type` is a callable (e.g. class) used to create the variable
+            `kw` are passed
+        """
+        if values:
+            if isinstance(values[0], str):
+                values = enumerate(values)
+        self.codes = {}
+        vals_to_pass = []
+        for c, d in values:
+            self.codes[d] = c
+            vals_to_pass.append(d)
+        if not isinstance(default, str):
+            default = vals_to_pass[default]
+        self.variable = var_type(master)
+        super().__init__(master, self.variable, default, *vals_to_pass, **kw)
+
+    def get(self):
+        """get the current value code"""
+        return self.codes[self.variable.get()]
+
+    def set(self, value):
+        """set the current value code"""
+        # this is more expensive, but I don;t expect high usage
+        self.variable.set({v: k for k, v in self.codes.itmes()}[value])

@@ -8,7 +8,7 @@ pycodestyle:
     exclude:
         - __pycache__
 
-no_blank_comment: false
+no_blank_comment: False
 
 
 # copied form the config example
