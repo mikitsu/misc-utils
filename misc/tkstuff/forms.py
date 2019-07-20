@@ -115,7 +115,7 @@ class FormWidget(mtk.ContainingWidget):
         super().__init__(master, *pass_widgets, **options)
         self.widget_dict = {k: w for k, w in zip(widget_keys, self.widgets)}
 
-        for k, v in default_content:
+        for k, v in default_content.items():
             mtk.get_setter(self.widget_dict[k])(v)
 
     def validate(self):
