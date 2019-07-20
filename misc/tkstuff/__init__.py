@@ -115,7 +115,6 @@ class ContainingWidget(tk.Widget):
             raise ValueError('`direction` must be of the form specified in __init__')
         x, y = xs, ys
         for widget in self.widgets:
-            print('cw', '.grid', repr(widget), x, y)
             if widget is rcoords:
                 xr, yr = x, y
             else:
@@ -167,7 +166,7 @@ class BaseProxyWidget(tk.Widget):
                            )(*args, rcoords=self, **kwargs)
             for container in container_list:  # is an iterator
                 x, y = container.grid(row=y, column=x, rcoords=self)
-            super().grid(self, row=y, column=x)
+            super().grid(row=y, column=x)
         def forgetter(self):
             container_list = reversed(self.container_list)
             getattr(next(container_list), forget)(self)
@@ -215,7 +214,7 @@ class BaseWrappedWidget(BaseProxyWidget):
             __new__  = main_cls.__new__
         main_cls = type('Wrapped'+main_cls.__name__,
                         bases,
-                        {'__new__': __new__,})
+                        {'__new__': __new__})
         container = ContainingWidget(master,
                                      (main_cls, main_kw),
                                      *auxiliary_widgets,
@@ -353,9 +352,9 @@ def get_getter(widget, getter):
             try:
                 return widget.curselection
             except AttributeError:
-                raise AttributeError('Neither a .get() nor a .curselection()'
-                                     ' were found. Please specify its name '
-                                     'in `getter`')
+                raise AttributeError('No valid method was found'
+                                     ' on {!r}'.format(widget)+
+                                     ' Please specify the name of the method.')
     else:
         return getattr(widget, getter)
 
@@ -375,7 +374,8 @@ def get_setter(widget, setter):
                     widget.selection_clear(0, tk.END)
                     widget.selection_set(value)
             else:
-                raise AttributeError('No valid conbination of methods was found.'
+                raise AttributeError('No valid combination of methods was found'
+                                     ' on {!r}'.format(widget)+
                                      ' Please specify the name of the method.')
             return setter
     else:
@@ -404,18 +404,6 @@ class ValidatedWidget(tk.Widget):
             if validator is not None:
                 self.validator = validator
             widget.__init__(self, *args, **kw)
-        if getter is None:
-            try:
-                getter = widget.get
-            except AttributeError:
-                try:
-                    getter = widget.curselection
-                except AttributeError:
-                    raise AttributeError('Neither a .get() nor a .curselection()'
-                                         ' were found. Please specify its name '
-                                         'in `getter`')
-        else:
-            getter = getattr(widget, getter)
         return type('Validated{}Widget'.format(widget.__name__),
                        (cls, widget),
                        {'__new__': object.__new__,
@@ -473,9 +461,9 @@ class VarWidget:
 
         r = type('{}WithVar'.format(widget.__name__),
                  (widget,),
-                 {'__init__': __init__
-                  'get': lambda s: s.varaible.get(),
-                  'set': lambda s, v: s.varaible.set(v)}
+                 {'__init__': __init__,
+                  'get': lambda s: s.variable.get(),
+                  'set': lambda s, v: s.variable.set(v)}
                  )
         return r
 
