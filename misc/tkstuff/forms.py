@@ -1,6 +1,7 @@
 """Django-like (in the sense of "class-based") forms for tkinter"""
 
 import inspect
+import copy
 import tkinter as tk
 import tkinter.messagebox as tk_msg
 import misc.tkstuff as mtk
@@ -227,7 +228,7 @@ class Form:
         groups = set(groups)
         kwargs = cls.__formwidget_options.copy()
         kwargs.update(options)
-        widgets = [w for w in cls.__widgets if w.use(elements, groups)]
+        widgets = [copy.deepcopy(w) for w in cls.__widgets if w.use(elements, groups)]
         return cls.__form_class(master, *widgets, **kwargs)
 
     def __init_subclass__(cls, autogen_names=True, template=False):
