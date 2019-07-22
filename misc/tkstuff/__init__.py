@@ -515,5 +515,5 @@ class OptionChoiceWidget(tk.OptionMenu):
 
     def set(self, value):
         """set the current value code"""
-        # this is more expensive, but I don;t expect high usage
-        self.variable.set({v: k for k, v in self.codes.itmes()}[value])
+        # this is more expensive, but I don't expect high usage
+        self.variable.set({v: k for k, v in self.codes.items()}[value])
