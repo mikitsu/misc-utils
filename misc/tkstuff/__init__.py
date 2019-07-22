@@ -457,7 +457,7 @@ class VarWidget:
         """
         def __init__(self, master, *args, **kwargs):
             self.variable = variable_type(master)
-            super(r, self).__init__(master, *args, **kwargs)
+            super(r, self).__init__(master, *args, variable=self.variable, **kwargs)
 
         r = type('{}WithVar'.format(widget.__name__),
                  (widget,),
