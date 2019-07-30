@@ -21,6 +21,9 @@ class Validator:
         current = None
         stored = []
         for check in checks:
+            if isinstance(check, (MultiValidator, TransformValidator, ConditionValidator)):
+                validators.append(check)
+                continue
             if check is None:
                 val = None
             elif callable(check):
