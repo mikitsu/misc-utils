@@ -2,6 +2,7 @@
 import functools
 import threaing
 import builtins
+import re
 import operator
 import typing as T
 
@@ -158,7 +159,7 @@ class Instance:
         if match:
             name = match.group(1)
             if name in ['in', 'is']:
-                return partial(Instance._call_with_arg,
+                return functools.partial(Instance._call_with_arg,
                                self,
                                _name=name,
                                _op=stored_lookups.append)
