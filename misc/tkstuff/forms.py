@@ -47,12 +47,25 @@ class FormWidget(mtk.ContainingWidget):
         POPUP = enum.auto()
         CUSTOM = enum.auto()
 
+    class SubmitOnReturn(enum.Enum):
+        """Information regarding submit bindings on <Return> for elements
+
+            NONE: do not bind
+            LAST: bind to the last form element
+            ALL: bind to all form elements
+        """
+        NONE = enum.auto()
+        LAST = enum.auto()
+        ALL = enum.auto()
+
     def __init__(self, master, *widgets,
                  error_handle=ErrorHandle.LABEL | ErrorHandle.POPUP,
                  error_display_options={},
                  submit_button=True,
                  onsubmit=lambda data: None,
                  default_content={},
+                 take_focus=False,
+                 submit_on_return=SubmitOnReturn.NONE,
                  **container_options):
         """Create a form.
 
@@ -81,6 +94,9 @@ class FormWidget(mtk.ContainingWidget):
             `default_content` is a mapping from field names to
                 their default content for this form. The fields must
                 have a setting method recognized by misc.tkstuff.get_setter.
+            `take_focus` specifies if the first form element should take focus
+            `submit_on_return` is an element of FormWIdget.SubmitOnReturn.
+                see its __doc__ for destails
             `container_options` are passed along to ContainingWidget
 
             By default, the direction for the ContainingWidget is set to `tk.BOTTOM`
@@ -118,6 +134,13 @@ class FormWidget(mtk.ContainingWidget):
 
         for k, v in default_content.items():
             mtk.get_setter(self.widget_dict[k])(v)
+        if submit_on_return is FormWidget.SubmitOnReturn.LAST:
+            self.widgets[-1].bind('<Return>', self.submit_action)
+        elif submit_on_return is FormWidget.SubmitOnReturn.ALL:
+            for w in self.widgets:
+                w.bind('<Return>', self.submit_action)
+        if take_focus:
+            self.widgets[0].focus()
 
     def validate(self):
         """Validate the form data and, if applicable,
