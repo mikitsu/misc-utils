@@ -4,6 +4,7 @@ Most of these are developed "on the go", so only the methods I actually
 use(d) will be overridden (if applicable)"""
 
 import tkinter as tk
+import tkinter.ttk as ttk
 
 from functools import wraps
 import types
@@ -44,7 +45,8 @@ class ContainingWidget(tk.Widget):
             their respective direction. They must allow space for all widgets
             and it is advised to set at most one of them. A value of 0 means
             an unlimited number of widgets may be positioned in that direction.
-        `base` is the widget to use as container"""
+        `base` is the widget to use as container
+        """
         self.base = base(master)
         self.base.container_widget = self
         self.widgets = tuple(w[0](self.base,
@@ -149,8 +151,8 @@ class BaseProxyWidget(tk.Widget):
     def __init__(self, *args, container=None, **kwargs):
         """Create a new ProxyWidget. `container` is the container,
             other arguments are passed along"""
-        super().__init__(*args, **kwargs)
         self.proxy_init(container)
+        super().__init__(*args, **kwargs)
 
     def proxy_init(self, container):
         self.__dict__.setdefault('container_list', [])
@@ -166,7 +168,8 @@ class BaseProxyWidget(tk.Widget):
                            )(*args, rcoords=self, **kwargs)
             for container in container_list:  # is an iterator
                 x, y = container.grid(row=y, column=x, rcoords=self)
-            super().grid(row=y, column=x)
+            if (x, y) != (-1, -1):
+                super().grid(row=y, column=x)
         def forgetter(self):
             container_list = reversed(self.container_list)
             getattr(next(container_list), forget)(self)
@@ -198,7 +201,8 @@ class BaseWrappedWidget(BaseProxyWidget):
             is accessible through .container
 
         `main_widget` and each of the `auxiliary_widgets`
-            are (<class>, <kwargs>)"""
+            are (<class>, <kwargs>)
+        """
         main_cls, main_kw = main_widget
         if main_cls in cls.mro():
             # multiple wrapping
@@ -273,10 +277,6 @@ class ScrollableWidget(tk.Widget):
 
             >>> ScrollableLabel = ScrollableWidget(...)(tk.Label)
 
-        Note: Due to technical reasons, when making a Widget that suppresses
-            the call of __init__, init_here=True must be
-            passed to __new__ to ensure proper functioning
-
         +-------------------------------------------------+
         | WARNING: multiple calling of a geometry manager |     
         |          *will*  *mess*  *things*  *up*         |
@@ -288,7 +288,7 @@ class ScrollableWidget(tk.Widget):
 
     def __call__(self, wrapped_cls):
         class NewClass(ProxyWidget, wrapped_cls):
-            def __new__(cls, master, *a, init_here=False, **kw):
+            def __new__(cls, master, *a, **kw):
                 container = ContainingWidget(master,  # attention: order matters and is used
                                              (tk.Canvas, {'width': self.width,
                                                           'height': self.height}),
@@ -301,10 +301,9 @@ class ScrollableWidget(tk.Widget):
                     inst = object.__new__(cls)
                 else:
                     inst = wrapped_cls.__new__(cls, canvas, *a, **kw)
-                inst.container = container  # other init done afterwards
-                inst.direction = self.direction
-                if init_here:
-                    inst.container.widgets[0].create_window((0, 0), window=inst.master)
+                inst.scroll_direction = self.direction
+                inst.container = container
+                inst.__init__(master, *a, container=container, **kw)
                 return inst
 
             def __init__(self, master, *args, **kwargs):
@@ -322,11 +321,11 @@ class ScrollableWidget(tk.Widget):
                 def wrapper(self, *args, **kwargs):
                     getattr(super(), name)(*args, **kwargs)
                     if isinstance(self, ContainingWidget):
-                        self._grid_subwidgets()
+                        self.grid_subwidgets(None)
                     if isinstance(self, BaseWrappedWidget):
                         x, y = self.master.container_widget.grid_subwidgets(self)
                         tk.Grid.grid(self, row=y, column=x)
-                    sticky = {'y': tk.NS, 'x': tk.EW}[self.direction]
+                    sticky = {'y': tk.NS, 'x': tk.EW}[self.scroll_direction]
                     self.container.widgets[1].grid(row=0, column=1, sticky=sticky)
                 wrapper.__name__ = name
                 def wrapper_forget(self):
@@ -344,7 +343,7 @@ class ScrollableWidget(tk.Widget):
         return NewClass
 
 
-def get_getter(widget, getter):
+def get_getter(widget, getter=None):
     if getter is None:
         try:
             return widget.get
@@ -359,7 +358,7 @@ def get_getter(widget, getter):
         return getattr(widget, getter)
 
 
-def get_setter(widget, setter):
+def get_setter(widget, setter=None):
     if setter is None:
         try:
             return widget.set
@@ -481,7 +480,7 @@ class VarWidget:
             master, *widget_kw.pop('*args', ()), **widget_kw)
 
 
-class OptionChoiceWidget(tk.OptionMenu):
+class OptionChoiceWidget(ttk.OptionMenu):
     """An Optionmenu with a its own variable"""
     def __init__(self, master, values, default=0, var_type=tk.Variable, **kw):
         """Create a new OptionChoiceWidget
