@@ -283,8 +283,10 @@ class Form:
 
             If `autogen_names` (argument) is True (default),
                 the elements are created as LabeledWidget instances.
-                The user-facing name is chosen by the get_name() method,
-                if it is not present, the variable name is used
+                The user-facing name is chosen by the `get_name()` method,
+                if it is not present, the variable name is used.
+                if present, the `get_name` method is also used as
+                error_display_options['popup_field_name_resolver'] argument
 
             Example:
 
@@ -330,6 +332,9 @@ class Form:
         """
         cls.__widgets = cls.__get_widgets(autogen_names)
         cls.__set_formwidget_prefs()
+        if autogen_names and hasattr(cls, 'get_name'):
+            cls.__formwidget_options.setdefault('error_display_options', {})[
+                'popup_field_name_resolver'] = cls.get_name
         if not template:
             widgets = []
             for cls_in_mro in cls.__mro__:
