@@ -1,6 +1,7 @@
 """Some prepared widgets, forms and functions"""
 
 import tkinter as tk
+from tkinter import ttk
 import misc.validation as mval
 import misc.tkstuff as mtk
 import misc.tkstuff.forms as mtkf
@@ -17,7 +18,7 @@ def type_entry(cls):
 IntEntry = type_entry(int)
 FloatEntry = type_entry(float)
 
-CheckbuttonWithVar = mtk.VarWidget.new_cls(tk.Checkbutton, tk.BooleanVar)
+CheckbuttonWithVar = mtk.VarWidget.new_cls(ttk.Checkbutton, tk.BooleanVar)
 
 
 class LoginForm(mtkf.Form):
