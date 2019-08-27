@@ -467,12 +467,12 @@ class VarWidget:
         return r
 
     @classmethod
-    def new(cls, master, widget, widgetkw, **var_kw):
+    def new(cls, master, widget, widget_kw, **var_kw):
         """Create a new widget instance directly
 
             `master` is passed
             `widget` is the widget class
-            `widgetkw` is a mapping of keyword-arguments for the widgte
+            `widget_kw` is a mapping of keyword-arguments for the widgte
                 the key '*args' may contain positional arguments
             `var_kw` are keyword arguments to be passed to VarWidget.new_cls
         """
