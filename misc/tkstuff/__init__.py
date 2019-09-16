@@ -448,15 +448,18 @@ class VarWidget:
     """A widget with attached variable, exposed through methods on the widget"""
 
     @staticmethod
-    def new_cls(widget, variable_type=tk.Variable):
+    def new_cls(widget, variable_type=tk.Variable, variable_name='variable'):
         """Create a new subclass and return it
 
             `widget` is the widget class
             `varibale_type` is the class to use for the variable
+            `variable_name` ist the name of the keyword argument
+                to be passed the variable 
         """
         def __init__(self, master, *args, **kwargs):
             self.variable = variable_type(master)
-            super(r, self).__init__(master, *args, variable=self.variable, **kwargs)
+            kwargs[variable_name] = self.variable
+            super(r, self).__init__(master, *args, **kwargs)
 
         r = type('{}WithVar'.format(widget.__name__),
                  (widget,),
