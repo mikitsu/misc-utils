@@ -472,7 +472,7 @@ class VarWidget:
 
             `master` is passed
             `widget` is the widget class
-            `widget_kw` is a mapping of keyword-arguments for the widgte
+            `widget_kw` is a mapping of keyword-arguments for the widgets
                 the key '*args' may contain positional arguments
             `var_kw` are keyword arguments to be passed to VarWidget.new_cls
         """
@@ -516,3 +516,54 @@ class OptionChoiceWidget(ttk.OptionMenu):
         """set the current value code"""
         # this is more expensive, but I don't expect high usage
         self.variable.set({v: k for k, v in self.codes.items()}[value])
+
+
+class RememberingEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable')):
+    """An Entry widget that remembers inputs by key pairs and allows pre-filling
+        
+        When the widget loses focus, the currently entered value is added
+            to a list. The list is sotored under a given key and is used
+            by all RemembringEntry instances with the same key.
+        
+        Note modifications to the list of previous values will mess things
+            up if changed while the widget has focus.
+            
+        `MAX_LIST_LENGTH` is the maximum length the list will have.
+    """
+    MAX_LIST_LENGTH = 5
+    __saved_data_master = {}
+    def __init__(self, master=None, cnf={}, rem_key=None, evt_next='<Next>',
+                 evt_prev='<Prior>', **kw):
+        """Create a new RemembringEntry
+        
+            `rem_key` is the key used to store preious entries
+            `evt_next` is the event pattern for going to the next entry
+            `evt_prev` is the event pattern for going to the previous entry
+        """
+        super().__init__(master, cnf, **kw)
+        self.__saved_data = self.__saved_data_master.setdefault(rem_key, [])
+        self.__index = -1
+        self.bind(evt_next, self.__fill_next)
+        self.bind(evt_prev, self.__fill_prev)
+        self.bind('<FocusOut>', self.__focus_out)
+        self.bind('<FocusIn>', self.__focus_in)
+    
+    def __fill_next(self, evt=None):
+        if self.__index > 0:
+            self.__index -= 1
+            self.set(self.__saved_data[self.__index])
+    
+    def __fill_prev(self, evt=None):
+        if self.__index < len(self.__saved_data)-1:
+            self.__index += 1
+            self.set(self.__saved_data[self.__index])
+    
+    def __focus_out(self, evt=None):
+        val = self.get()
+        if val not in self.__saved_data:
+            self.__saved_data.insert(0, val)
+            if len(self.__saved_data) > self.MAX_LIST_LENGTH:
+                self.__saved_data.pop()
+    
+    def __focus_in(self, evt=None):
+        self.__index = -1
