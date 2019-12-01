@@ -206,3 +206,45 @@ class SocketFile:
         self.wfile.close()
         self.rfile.close()
         self.socket.close()
+
+
+class MultiUseShelf:
+    def with_open_shelf(method):
+        def wrapped(self, *args):
+            if self.shelf is None:
+                raise ValueError('shelf must be open')
+            else:
+                return method(self, *args)
+        return wrapped
+
+    def __init__(self, name):
+        self.shelf_name = name
+        self.shelf = None
+
+    @with_open_shelf
+    def __getitem__(self, name):
+        return self.shelf[name]
+
+    @with_open_shelf
+    def __setitem__(self, name, value):
+        self.shelf[name] = value
+
+    @with_open_shelf
+    def __delitem__(self, name):
+        del self.shelf[name]
+
+    @with_open_shelf
+    def __getattr__(self, name):
+        return getattr(self.shelf, name)
+
+    def __enter__(self):
+        self.shelf = shelve.open(self.shelf_name)
+
+    @with_open_shelf
+    def __exit__(self, *exc_info):
+        self.shelf.close()
+        self.shelf = None
+
+    open = __enter__
+    close = __exit__
+    del with_open_shelf
