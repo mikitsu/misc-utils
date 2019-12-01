@@ -9,6 +9,8 @@ Includes:
   - multiline input
   - a Tree
   - a class for delayed lookup evaluation
+  - a read/write wrapper for sockets
+  - a wrapper for [shelves](https://docs.python.org/3/library/shelve.html), making them multi-use
 - a timer module, extensible but also working out of the box
 - in a validation module
   - a general Validator (factory for the following)
