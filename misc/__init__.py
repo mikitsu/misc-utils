@@ -182,3 +182,27 @@ class Tree:
     def __setattr__(self, name, value):
         object.__setattr__(self, name, type(
             '<DerivedTreeNode: {}>'.format(type(value)), (Tree, type(value)), {})(value))
+        
+
+class SocketFile:
+    def __init__(self, socket):
+        self.socket = socket
+        self.rfile = socket.makefile('r')
+        self.wfile = socket.makefile('w')
+
+    def read(self, size=-1):
+        return self.rfile.read(size)
+
+    def readline(self):
+        return self.rfile.readline()
+
+    def write(self, text):
+        return self.wfile.write(text)
+
+    def writeline(self, line):
+        return self.wfile.write(line+'\n')
+
+    def close(self):
+        self.wfile.close()
+        self.rfile.close()
+        self.socket.close()
