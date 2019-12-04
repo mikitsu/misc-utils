@@ -1,7 +1,8 @@
 """Some utilities for tkinter
 
 Most of these are developed "on the go", so only the methods I actually
-use(d) will be overridden (if applicable)"""
+use(d) will be overridden (if applicable)
+"""
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -18,7 +19,8 @@ class ContainingWidget(tk.Widget):
     """Provide a widget that includes other widgets.
 
     Currently applies .grid(), .pack() and .place() and their respecive .*_forget()
-    Other calls and attribute lookups are delegated to the base widget"""
+    Other calls and attribute lookups are delegated to the base widget
+    """
 
     def __init__(self, master, *widgets,
                  direction=(tk.RIGHT, tk.BOTTOM),
@@ -92,7 +94,8 @@ class ContainingWidget(tk.Widget):
 
             `rcoords` specifies a widget (identity comparison) that
                 will not have .grid() called upon it. Instead, the x and y
-                coordinates of its position on the grid will be returned"""
+                coordinates of its position on the grid will be returned
+        """
         # x and y Start,  Increment and Return
         xr, yr = -1, -1
         if tk.RIGHT in self.direction:
@@ -149,7 +152,8 @@ class BaseProxyWidget(tk.Widget):
             handled by the superclass.
 
         i.e. The method will first be passed to self.container and executed
-            on super() at the second call"""
+            on super() at the second call
+    """
 
     def __init__(self, *args, container=None, **kwargs):
         """Create a new ProxyWidget. `container` is the container,
@@ -241,7 +245,8 @@ class LabeledWidget(BaseWrappedWidget):
     """Convenience class for widgets to be displayed with a Label
 
         Provide a .labels dict to provide direct access to all labels
-        New labels may be added with the add_label method"""
+        New labels may be added with the add_label method
+    """
     def __new__(cls, master, widget, text,
                 position=tk.LEFT,
                 label_id='label',
@@ -253,7 +258,7 @@ class LabeledWidget(BaseWrappedWidget):
                 if the option 'direction' is present, it overrides the automatic
                 direction chosen for the position.
             `options` are passed
-            """
+        """
         kw = {'direction': (position, (tk.TOP if position in (tk.LEFT, tk.RIGHT) else tk.BOTTOM))}
         kw.update(options)
         self = super().__new__(cls, master, widget, (tk.Label, {'text': text}),
@@ -284,7 +289,8 @@ class ScrollableWidget(tk.Widget):
         +-------------------------------------------------+
         | WARNING: multiple calling of a geometry manager |     
         |          *will*  *mess*  *things*  *up*         |
-        +-------------------------------------------------+"""
+        +-------------------------------------------------+
+    """
 
     def __init__(self, direction=tk.VERTICAL, width=None, height=None):
         self.direction = {tk.VERTICAL: 'y', tk.HORIZONTAL: 'x'}[direction]
@@ -422,7 +428,8 @@ class ValidatedWidget(tk.Widget):
         """Create a new widget.
 
             the class is created by cls.new_cls() and then initialized
-                with the gven arguements"""
+                with the gven arguements
+        """
         return cls.new_cls(widget, validator, getter)(master, **widgetkw)
 
     def validate(self):
@@ -437,7 +444,8 @@ class RadioChoiceWidget(ContainingWidget):  # yay, no class creation magic, just
                 <display> is show to the user
             if `default` is not None, the `default`th (0-index) one will be selected
             `container_kw` will be passed along and may
-                e.g. be used to specify directions"""
+                e.g. be used to specify directions
+        """
         self.var = tk.Variable(master)
         rbtn = []
         for code, text in choices:
@@ -460,7 +468,7 @@ class VarWidget:
             `widget` is the widget class
             `varibale_type` is the class to use for the variable
             `variable_name` ist the name of the keyword argument
-                to be passed the variable 
+                to be passed the variable
         """
 
         def __init__(self, master, *args, **kwargs):
