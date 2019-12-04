@@ -1,7 +1,8 @@
 """Some utilities for tkinter
 
 Most of these are developed "on the go", so only the methods I actually
-use(d) will be overridden (if applicable)"""
+use(d) will be overridden (if applicable)
+"""
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -11,14 +12,16 @@ import types
 import enum
 
 GEOMETRY_MANAGERS = ('grid', 'pack', 'place')
-GEOMETRY_MANAGERS_FORGET = [(n, n+'_forget') for n in GEOMETRY_MANAGERS]
+GEOMETRY_MANAGERS_FORGET = [(n, n + '_forget') for n in GEOMETRY_MANAGERS]
 
 
 class ContainingWidget(tk.Widget):
     """Provide a widget that includes other widgets.
 
     Currently applies .grid(), .pack() and .place() and their respecive .*_forget()
-    Other calls and attribute lookups are delegated to the base widget"""
+    Other calls and attribute lookups are delegated to the base widget
+    """
+
     def __init__(self, master, *widgets,
                  direction=(tk.RIGHT, tk.BOTTOM),
                  horizontal=0,
@@ -71,6 +74,7 @@ class ContainingWidget(tk.Widget):
                             respect the directions given in __init__
                             pass *args and **kwargs to the base widget
                             """.format(name)
+
         def forgetter(self, exclude=None):
             getattr(self.base, forget)()
             for widget in self.widgets:
@@ -90,7 +94,8 @@ class ContainingWidget(tk.Widget):
 
             `rcoords` specifies a widget (identity comparison) that
                 will not have .grid() called upon it. Instead, the x and y
-                coordinates of its position on the grid will be returned"""
+                coordinates of its position on the grid will be returned
+        """
         # x and y Start,  Increment and Return
         xr, yr = -1, -1
         if tk.RIGHT in self.direction:
@@ -98,15 +103,15 @@ class ContainingWidget(tk.Widget):
             xi = 1
         elif tk.LEFT in self.direction:
             if self.horizontal:
-                xs = self.horizontal-1
+                xs = self.horizontal - 1
             else:
-                xs = len(self.widgets)-1
+                xs = len(self.widgets) - 1
             xi = -1
         if tk.TOP in self.direction:
             if self.vertical:
-                ys = self.vertical-1
+                ys = self.vertical - 1
             else:
-                ys = len(self.widgets)-1
+                ys = len(self.widgets) - 1
             yi = -1
         elif tk.BOTTOM in self.direction:
             ys = 0
@@ -147,7 +152,9 @@ class BaseProxyWidget(tk.Widget):
             handled by the superclass.
 
         i.e. The method will first be passed to self.container and executed
-            on super() at the second call"""
+            on super() at the second call
+    """
+
     def __init__(self, *args, container=None, **kwargs):
         """Create a new ProxyWidget. `container` is the container,
             other arguments are passed along"""
@@ -170,6 +177,7 @@ class BaseProxyWidget(tk.Widget):
                 x, y = container.grid(row=y, column=x, rcoords=self)
             if (x, y) != (-1, -1):
                 super().grid(row=y, column=x)
+
         def forgetter(self):
             container_list = reversed(self.container_list)
             getattr(next(container_list), forget)(self)
@@ -215,8 +223,8 @@ class BaseWrappedWidget(BaseProxyWidget):
             def __new__(cls, *si, **nk):
                 return object.__new__(cls)
         else:
-            __new__  = main_cls.__new__
-        main_cls = type('Wrapped'+main_cls.__name__,
+            __new__ = main_cls.__new__
+        main_cls = type('Wrapped' + main_cls.__name__,
                         bases,
                         {'__new__': __new__})
         container = ContainingWidget(master,
@@ -237,7 +245,8 @@ class LabeledWidget(BaseWrappedWidget):
     """Convenience class for widgets to be displayed with a Label
 
         Provide a .labels dict to provide direct access to all labels
-        New labels may be added with the add_label method"""
+        New labels may be added with the add_label method
+    """
     def __new__(cls, master, widget, text,
                 position=tk.LEFT,
                 label_id='label',
@@ -249,7 +258,7 @@ class LabeledWidget(BaseWrappedWidget):
                 if the option 'direction' is present, it overrides the automatic
                 direction chosen for the position.
             `options` are passed
-            """
+        """
         kw = {'direction': (position, (tk.TOP if position in (tk.LEFT, tk.RIGHT) else tk.BOTTOM))}
         kw.update(options)
         self = super().__new__(cls, master, widget, (tk.Label, {'text': text}),
@@ -269,7 +278,7 @@ class ScrollableWidget(tk.Widget):
         given widget to the canvas. Attach the apropriate methods.
 
         This class is to be used as a decorator/wrapper:
-        
+
             >>> @ScrollableWidget(...)
             ... class MyWidget(tk.Widget):
             ...     def stuff(self, *args):
@@ -280,7 +289,9 @@ class ScrollableWidget(tk.Widget):
         +-------------------------------------------------+
         | WARNING: multiple calling of a geometry manager |     
         |          *will*  *mess*  *things*  *up*         |
-        +-------------------------------------------------+"""
+        +-------------------------------------------------+
+    """
+
     def __init__(self, direction=tk.VERTICAL, width=None, height=None):
         self.direction = {tk.VERTICAL: 'y', tk.HORIZONTAL: 'x'}[direction]
         self.width = width
@@ -295,8 +306,8 @@ class ScrollableWidget(tk.Widget):
                                              (tk.Scrollbar, {})
                                              )
                 canvas, scrollbar = container.widgets
-                canvas.config(**{self.direction+'scrollcommand': scrollbar.set})
-                scrollbar.config(command=getattr(canvas, self.direction+'view'))
+                canvas.config(**{self.direction + 'scrollcommand': scrollbar.set})
+                scrollbar.config(command=getattr(canvas, self.direction + 'view'))
                 if wrapped_cls.__new__ is object.__new__:
                     inst = object.__new__(cls)
                 else:
@@ -310,12 +321,11 @@ class ScrollableWidget(tk.Widget):
                 canvas = self.container.widgets[0]
                 super().__init__(canvas, *args, **kwargs)
                 canvas.create_window((0, 0), window=self)
-                
 
             def set_scrollregion(self):
                 canvas = self.container.widgets[0]
                 sw, sh = self.winfo_width(), self.winfo_height()
-                canvas.config(scrollregion=(-sw//2, -sh//2, sw//2, sh//2))
+                canvas.config(scrollregion=(-sw // 2, -sh // 2, sw // 2, sh // 2))
 
             def _geo_wrapper(name, forget):
                 def wrapper(self, *args, **kwargs):
@@ -328,6 +338,7 @@ class ScrollableWidget(tk.Widget):
                     sticky = {'y': tk.NS, 'x': tk.EW}[self.scroll_direction]
                     self.container.widgets[1].grid(row=0, column=1, sticky=sticky)
                 wrapper.__name__ = name
+
                 def wrapper_forget(self):
                     getattr(self.container, forget)()
                 wrapper_forget.__name__ = forget
@@ -337,9 +348,9 @@ class ScrollableWidget(tk.Widget):
                 locals()[name], locals()[forget] = _geo_wrapper(name, forget)
             del _geo_wrapper
 
-        NewClass.__name__ = 'Scrollable'+wrapped_cls.__name__
+        NewClass.__name__ = 'Scrollable' + wrapped_cls.__name__
         NewClass.__qualname__ = '.'.join(NewClass.__qualname__.rsplit('.', 1)[:-1]
-                                         +[NewClass.__name__])
+                                         + [NewClass.__name__])
         return NewClass
 
 
@@ -352,8 +363,8 @@ def get_getter(widget, getter=None):
                 return widget.curselection
             except AttributeError:
                 raise AttributeError('No valid method was found'
-                                     ' on {!r}'.format(widget)+
-                                     ' Please specify the name of the method.')
+                                     ' on {!r}'.format(widget)
+                                     + ' Please specify the name of the method.')
     else:
         return getattr(widget, getter)
 
@@ -374,8 +385,8 @@ def get_setter(widget, setter=None):
                     widget.selection_set(value)
             else:
                 raise AttributeError('No valid combination of methods was found'
-                                     ' on {!r}'.format(widget)+
-                                     ' Please specify the name of the method.')
+                                     ' on {!r}'.format(widget)
+                                     + ' Please specify the name of the method.')
             return setter
     else:
         return getattr(widget, setter)
@@ -394,6 +405,7 @@ class ValidatedWidget(tk.Widget):
                 input from the widget. If it is None, .get() and
                 .curselection() are tried
         """
+
         def __init__(self, *args, validator=None, **kw):
             """Initialize self.
 
@@ -404,21 +416,22 @@ class ValidatedWidget(tk.Widget):
                 self.validator = validator
             widget.__init__(self, *args, **kw)
         return type('Validated{}Widget'.format(widget.__name__),
-                       (cls, widget),
-                       {'__new__': object.__new__,
+                    (cls, widget),
+                    {'__new__': object.__new__,
                         '__init__': __init__,
                         'getter': get_getter(widget, getter),
                         'validator': staticmethod(validator)}
-                       )
+                    )
 
     @classmethod
     def new(cls, master, widget, widgetkw, validator, getter=None):
         """Create a new widget.
 
             the class is created by cls.new_cls() and then initialized
-                with the gven arguements"""
+                with the gven arguements
+        """
         return cls.new_cls(widget, validator, getter)(master, **widgetkw)
-    
+
     def validate(self):
         return self.validator(self.getter())
 
@@ -431,7 +444,8 @@ class RadioChoiceWidget(ContainingWidget):  # yay, no class creation magic, just
                 <display> is show to the user
             if `default` is not None, the `default`th (0-index) one will be selected
             `container_kw` will be passed along and may
-                e.g. be used to specify directions"""
+                e.g. be used to specify directions
+        """
         self.var = tk.Variable(master)
         rbtn = []
         for code, text in choices:
@@ -448,15 +462,19 @@ class VarWidget:
     """A widget with attached variable, exposed through methods on the widget"""
 
     @staticmethod
-    def new_cls(widget, variable_type=tk.Variable):
+    def new_cls(widget, variable_type=tk.Variable, variable_name='variable'):
         """Create a new subclass and return it
 
             `widget` is the widget class
             `varibale_type` is the class to use for the variable
+            `variable_name` ist the name of the keyword argument
+                to be passed the variable
         """
+
         def __init__(self, master, *args, **kwargs):
             self.variable = variable_type(master)
-            super(r, self).__init__(master, *args, variable=self.variable, **kwargs)
+            kwargs[variable_name] = self.variable
+            super(r, self).__init__(master, *args, **kwargs)
 
         r = type('{}WithVar'.format(widget.__name__),
                  (widget,),
@@ -472,7 +490,7 @@ class VarWidget:
 
             `master` is passed
             `widget` is the widget class
-            `widget_kw` is a mapping of keyword-arguments for the widgte
+            `widget_kw` is a mapping of keyword-arguments for the widgets
                 the key '*args' may contain positional arguments
             `var_kw` are keyword arguments to be passed to VarWidget.new_cls
         """
@@ -482,6 +500,7 @@ class VarWidget:
 
 class OptionChoiceWidget(ttk.OptionMenu):
     """An Optionmenu with a its own variable"""
+
     def __init__(self, master, values, default=0, var_type=tk.Variable, **kw):
         """Create a new OptionChoiceWidget
 
@@ -516,3 +535,55 @@ class OptionChoiceWidget(ttk.OptionMenu):
         """set the current value code"""
         # this is more expensive, but I don't expect high usage
         self.variable.set({v: k for k, v in self.codes.items()}[value])
+
+
+class RememberingEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable')):
+    """An Entry widget that remembers inputs by key pairs and allows pre-filling
+
+        When the widget loses focus, the currently entered value is added
+            to a list. The list is sotored under a given key and is used
+            by all RemembringEntry instances with the same key.
+
+        Note modifications to the list of previous values will mess things
+            up if changed while the widget has focus.
+
+        `MAX_LIST_LENGTH` is the maximum length the list will have.
+    """
+    MAX_LIST_LENGTH = 5
+    __saved_data_master = {}
+
+    def __init__(self, master=None, cnf={}, rem_key=None, evt_next='<Next>',
+                 evt_prev='<Prior>', **kw):
+        """Create a new RemembringEntry
+
+            `rem_key` is the key used to store preious entries
+            `evt_next` is the event pattern for going to the next entry
+            `evt_prev` is the event pattern for going to the previous entry
+        """
+        super().__init__(master, cnf, **kw)
+        self.__saved_data = self.__saved_data_master.setdefault(rem_key, [])
+        self.__index = -1
+        self.bind(evt_next, self.__fill_next)
+        self.bind(evt_prev, self.__fill_prev)
+        self.bind('<FocusOut>', self.__focus_out)
+        self.bind('<FocusIn>', self.__focus_in)
+
+    def __fill_next(self, evt=None):
+        if self.__index > 0:
+            self.__index -= 1
+            self.set(self.__saved_data[self.__index])
+
+    def __fill_prev(self, evt=None):
+        if self.__index < len(self.__saved_data) - 1:
+            self.__index += 1
+            self.set(self.__saved_data[self.__index])
+
+    def __focus_out(self, evt=None):
+        val = self.get()
+        if val not in self.__saved_data:
+            self.__saved_data.insert(0, val)
+            if len(self.__saved_data) > self.MAX_LIST_LENGTH:
+                self.__saved_data.pop()
+
+    def __focus_in(self, evt=None):
+        self.__index = -1
