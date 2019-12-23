@@ -7,10 +7,6 @@ use(d) will be overridden (if applicable)
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from functools import wraps
-import types
-import enum
-
 GEOMETRY_MANAGERS = ('grid', 'pack', 'place')
 GEOMETRY_MANAGERS_FORGET = [(n, n + '_forget') for n in GEOMETRY_MANAGERS]
 
@@ -50,6 +46,7 @@ class ContainingWidget(tk.Widget):
             an unlimited number of widgets may be positioned in that direction.
         `base` is the widget to use as container
         """
+        super().__init__(master)
         self.base = base(master)
         self.base.container_widget = self
         self.widgets = tuple(w[0](self.base,
