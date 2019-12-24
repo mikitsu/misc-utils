@@ -6,7 +6,11 @@ use(d) will be overridden (if applicable)
 
 import tkinter as tk
 import tkinter.ttk as ttk
-from .. import __init__ as misc
+# __init__ imports the modules __init__ method
+# get the instance with __self__
+from .. import __init__
+misc = __init__.__self__
+del __init__
 
 GEOMETRY_MANAGERS = ('grid', 'pack', 'place')
 GEOMETRY_MANAGERS_FORGET = [(n, n + '_forget') for n in GEOMETRY_MANAGERS]
@@ -540,12 +544,17 @@ class OptionChoiceWidget(ttk.OptionMenu):
         self.variable.set({v: k for k, v in self.codes.items()}[value])
 
 
-class RememberingEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable')):
+class VariableEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable'),
+                    tk.Entry):  # for benefit of automatic checks
+    """Entry with attached variable"""
+
+
+class RememberingEntry(VariableEntry):
     """An Entry widget that remembers inputs by key pairs and allows pre-filling
 
         When the widget loses focus, the currently entered value is added
-            to a list. The list is sotored under a given key and is used
-            by all RemembringEntry instances with the same key.
+            to a list. The list is stored under a given key and is used
+            by all RememberingEntry instances with the same key.
 
         Note modifications to the list of previous values will mess things
             up if changed while the widget has focus.
@@ -557,9 +566,9 @@ class RememberingEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable')
 
     def __init__(self, master=None, cnf={}, rem_key=None, evt_next='<Next>',
                  evt_prev='<Prior>', **kw):
-        """Create a new RemembringEntry
+        """Create a new RememberingEntry
 
-            `rem_key` is the key used to store preious entries
+            `rem_key` is the key used to store previous entries
             `evt_next` is the event pattern for going to the next entry
             `evt_prev` is the event pattern for going to the previous entry
         """
@@ -590,3 +599,31 @@ class RememberingEntry(VarWidget.new_cls(tk.Entry, variable_name='textvariable')
 
     def __focus_in(self, evt=None):
         self.__index = -1
+
+
+class AutocompleteEntry(VariableEntry):
+    """entry widget that autocompletes based on the last typed characters"""
+    def __init__(self, master, cnf={}, autocompletes=None,
+                 autocomplete_event=None, **kwargs):
+        """Create a new AutocompleteWidget
+
+            ``autocompletes`` is a mapping from last entered characters to
+                text to complete (without the leading characters)
+        """
+        super().__init__(master, cnf, **kwargs)
+        if autocompletes is None:
+            autocompletes = {}
+        if autocomplete_event is None:
+            autocomplete_event = '<Control-space>'
+        self.autocompletes = autocompletes
+        self.bind(autocomplete_event, self.autocomplete)
+
+    def autocomplete(self, event=None):
+        """attempt to autocomplete"""
+        position = self.index(tk.INSERT)
+        curval = self.get()[:position]
+        for k, v in self.autocompletes.items():
+            if k == curval[-len(k):]:
+                self.insert(position, v)
+                self.icursor(position + len(v))
+                break
