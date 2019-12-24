@@ -602,8 +602,9 @@ class RememberingEntry(VariableEntry):
 
 
 class AutocompleteEntry(VariableEntry):
-    """entry widget that provides autocompletion based on the last typed characters"""
-    def __init__(self, master, cnf={}, autocompletes=None, autocomplete_event=None, **kwargs):
+    """entry widget that autocompletes based on the last typed characters"""
+    def __init__(self, master, cnf={}, autocompletes=None,
+                 autocomplete_event=None, **kwargs):
         """Create a new AutocompleteWidget
 
             ``autocompletes`` is a mapping from last entered characters to
