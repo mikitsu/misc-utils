@@ -16,7 +16,7 @@ GEOMETRY_MANAGERS = ('grid', 'pack', 'place')
 GEOMETRY_MANAGERS_FORGET = [(n, n + '_forget') for n in GEOMETRY_MANAGERS]
 
 
-class ContainingWidget:
+class ContainingWidget(tk.Widget):
     """Provide a widget that includes other widgets.
 
     Currently applies .grid(), .pack() and .place() and their respective .*_forget()
