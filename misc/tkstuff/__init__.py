@@ -15,7 +15,7 @@ GEOMETRY_MANAGERS_FORGET = [(n, n + '_forget') for n in GEOMETRY_MANAGERS]
 class ContainingWidget:
     """Provide a widget that includes other widgets.
 
-    Currently applies .grid(), .pack() and .place() and their respecive .*_forget()
+    Currently applies .grid(), .pack() and .place() and their respective .*_forget()
     Other calls and attribute lookups are delegated to the base widget
     """
 
@@ -140,14 +140,14 @@ class ContainingWidget:
 
 class BaseProxyWidget(tk.Widget):
     """Provide a widget that delegates some lookups to a .container
-        in a way compatible with ContainningWidget
+        in a way compatible with ContainingWidget
 
         the delegated lookups are:
         - .grid, .pack, .place and their .*_forget counterparts
         - .destroy
 
         the methods are wrapped in the following way:
-            The first call gets send to .container, the second one is actually
+            The first call gets sent to .container, the second one is actually
             handled by the superclass.
 
         i.e. The method will first be passed to self.container and executed
@@ -272,7 +272,7 @@ class LabeledWidget(BaseWrappedWidget):
         return self
 
 
-class ScrollableWidget(tk.Widget):
+class ScrollableWidget:
     """Provide a scrollable widget.
 
         create a ContainingWidget with a canvas and a scrollbar and add the
@@ -328,6 +328,8 @@ class ScrollableWidget(tk.Widget):
                 sw, sh = self.winfo_width(), self.winfo_height()
                 canvas.config(scrollregion=(-sw // 2, -sh // 2, sw // 2, sh // 2))
 
+            @misc.temp_function
+            @staticmethod
             def _geo_wrapper(name, forget):
                 def wrapper(self, *args, **kwargs):
                     getattr(super(), name)(*args, **kwargs)
@@ -429,7 +431,7 @@ class ValidatedWidget(tk.Widget):
         """Create a new widget.
 
             the class is created by cls.new_cls() and then initialized
-                with the gven arguements
+                with the given arguments
         """
         return cls.new_cls(widget, validator, getter)(master, **widgetkw)
 
@@ -500,13 +502,13 @@ class VarWidget:
 
 
 class OptionChoiceWidget(ttk.OptionMenu):
-    """An Optionmenu with a its own variable"""
+    """An OptionMenu with a its own variable"""
 
     def __init__(self, master, values, default=0, var_type=tk.Variable, **kw):
         """Create a new OptionChoiceWidget
 
             `master` is passed
-            `values` is a sequence of (<code>, <dispaly>) where <code>
+            `values` is a sequence of (<code>, <display>) where <code>
                 is returned bu .get() and <display> is shown to the user.
                 alternatively, it may be a sequence of strings in which case
                 the strings are shown and .get() returns the index
