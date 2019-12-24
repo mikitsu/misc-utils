@@ -601,7 +601,7 @@ class RememberingEntry(VariableEntry):
         self.__index = -1
 
 
-class AutocompleteWidget(VariableEntry):
+class AutocompleteEntry(VariableEntry):
     """entry widget that provides autocompletion based on the last typed characters"""
     def __init__(self, master, cnf={}, autocompletes=None, autocomplete_event=None, **kwargs):
         """Create a new AutocompleteWidget
