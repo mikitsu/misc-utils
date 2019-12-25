@@ -260,36 +260,47 @@ class MultiUseShelf:
     del with_open_shelf
 
 
-class FrozenDict(dict):
+class FrozenDict:
     """immutable mapping"""
-    __slots__ = ()
-    __mutating_methods = frozenset(('clear', 'copy', 'pop', 'popitem', 'setdefault', 'update'))
+    def __init__(self, *args, **kwargs):
+        self.__dict = dict(*args, **kwargs)
 
-    def __setitem__(self, key, value):
-        raise TypeError("'{}' object does not support item assignment"
-                        .format(type(self).__name__))
+    def __contains__(self, item):
+        return item in self.__dict
 
-    def __delitem__(self, item):
-        raise TypeError("'{}' object does not support item deletion"
-                        .format(type(self).__name__))
+    def __eq__(self, other):
+        if isinstance(other, __class__):
+            return self.__dict == other.__dict
+        else:
+            return self.__dict.__eq__(other)
+
+    def __getitem__(self, item):
+        return self.__dict[item]
 
     def __hash__(self):
-        return hash(tuple(self.items()))
+        return hash(tuple(self.__dict.items()))
+
+    def __iter__(self):
+        return iter(self.__dict)
+
+    def __len__(self):
+        return len(self.__dict)
 
     def __repr__(self):
-        return '{}({})'.format(type(self).__name__, super().__repr__())
-
-    def __getattribute__(self, name):
-        if name in super().__getattribute__('_FrozenDict__mutating_methods'):
-            raise AttributeError("'{}' object has not attribute '{}'"
-                                 .format(type(self).__name__, name))
-        else:
-            return super().__getattribute__(name)
-
-    def __dir__(self):
-        return list(frozenset(super().__dir__()) - self.__mutating_methods)
+        return '{}({})'.format(type(self).__name__, self.__dict)
 
     @classmethod
-    def fromkeys(cls, seq):
-        # noinspection PyArgumentList
-        return cls(super().fromkeys(seq))
+    def fromkeys(cls, *args):
+        return cls(dict.fromkeys(*args))
+
+    def get(self, *args):
+        return self.__dict.get(*args)
+
+    def items(self):
+        return self.__dict.items()
+
+    def keys(self):
+        return self.__dict.keys()
+
+    def values(self):
+        return self.__dict.values()
