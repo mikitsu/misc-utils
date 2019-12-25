@@ -2,6 +2,7 @@
 import functools
 import threading
 import builtins
+import shelve
 import re
 import operator
 import typing as T
@@ -257,3 +258,38 @@ class MultiUseShelf:
     open = __enter__
     close = __exit__
     del with_open_shelf
+
+
+class FrozenDict(dict):
+    """immutable mapping"""
+    __slots__ = ()
+    __mutating_methods = frozenset(('clear', 'copy', 'pop', 'popitem', 'setdefault', 'update'))
+
+    def __setitem__(self, key, value):
+        raise TypeError("'{}' object does not support item assignment"
+                        .format(type(self).__name__))
+
+    def __delitem__(self, item):
+        raise TypeError("'{}' object does not support item deletion"
+                        .format(type(self).__name__))
+
+    def __hash__(self):
+        return hash(tuple(self.items()))
+
+    def __repr__(self):
+        return '{}({})'.format(type(self).__name__, super().__repr__())
+
+    def __getattribute__(self, name):
+        if name in super().__getattribute__('_FrozenDict__mutating_methods'):
+            raise AttributeError("'{}' object has not attribute '{}'"
+                                 .format(type(self).__name__, name))
+        else:
+            return super().__getattribute__(name)
+
+    def __dir__(self):
+        return list(frozenset(super().__dir__()) - self.__mutating_methods)
+
+    @classmethod
+    def fromkeys(cls, seq):
+        # noinspection PyArgumentList
+        return cls(super().fromkeys(seq))
