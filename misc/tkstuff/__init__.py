@@ -327,6 +327,7 @@ class ScrollableWidget:
                 canvas.create_window((0, 0), window=self)
                 self.set_scrollregion()
                 canvas.bind('<Configure>', self.set_scrollregion)
+                self.bind('<Configure>', self.set_scrollregion)
                 self.bind_all('<MouseWheel>', self.global_scroll, add=True)
                 self.bind_all('<Button-4>', self.global_scroll, add=True)
                 self.bind_all('<Button-5>', self.global_scroll, add=True)
